@@ -15,33 +15,33 @@ def divide_chunks(l, n):
         yield l[i:i + n] 
 
 def plot_image_grid(df, n_columns):
-	n = df.shape[0]
-	for idxs_chunk in divide_chunks(range(n), n_columns):
-		cols = st.beta_columns(3)
-		for col_idx, img_idx in enumerate(idxs_chunk):
-			path = img_path / df["file"].iloc[img_idx]
-			pred_class = df["pred_camera_view"].iloc[img_idx]
-			img = pyplot.imread(path)
-			cols[col_idx].write("**Pred**: "+ pred_class)
-			cols[col_idx].image(img, width=200)
+    n = df.shape[0]
+    for idxs_chunk in divide_chunks(range(n), n_columns):
+        cols = st.beta_columns(3)
+        for col_idx, img_idx in enumerate(idxs_chunk):
+            path = img_path / df["file"].iloc[img_idx]
+            pred_class = df["pred_camera_view"].iloc[img_idx]
+            img = pyplot.imread(path)
+            cols[col_idx].write("**Pred**: "+ pred_class)
+            cols[col_idx].image(img, width=200)
 
 
 ##############
 # Streamlit Dashboard
 def main(): 
-	st.title("Video Tool - Camera Position Explorer")
-	st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
-	true_camera_view = st.selectbox("Select camera position", camera_views)
-	correct_pred_option = st.radio(
-	    "Show Predictions",
-    	("Correct", "Incorrect"))
-	filtered_df = video_df[video_df["true_camera_view"] == true_camera_view]
-	if correct_pred_option == "Correct":
-		filtered_df = filtered_df[filtered_df["true_camera_view"] == filtered_df["pred_camera_view"]]
-	else:
-		filtered_df = filtered_df[filtered_df["true_camera_view"] != filtered_df["pred_camera_view"]]
-	filtered_df = filtered_df.iloc[:3*10]
-	plot_image_grid(filtered_df, 3)
+    st.title("Video Tool - Camera Position Explorer")
+    st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
+    true_camera_view = st.selectbox("Select camera position", camera_views)
+    correct_pred_option = st.radio(
+        "Show Predictions",
+        ("Correct", "Incorrect"))
+    filtered_df = video_df[video_df["true_camera_view"] == true_camera_view]
+    if correct_pred_option == "Correct":
+        filtered_df = filtered_df[filtered_df["true_camera_view"] == filtered_df["pred_camera_view"]]
+    else:
+        filtered_df = filtered_df[filtered_df["true_camera_view"] != filtered_df["pred_camera_view"]]
+    filtered_df = filtered_df.iloc[:3*10]
+    plot_image_grid(filtered_df, 3)
 
 
 ##############
