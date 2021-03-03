@@ -5,7 +5,7 @@ from pathlib import Path
 from matplotlib import pyplot
 ##############
 # Setting up data and paths
-img_path = Path("/Volumes/GoogleDrive/My Drive/ColabData/video_images")
+img_path = Path("../../../baseball-analysis/videos/video_images")
 video_df = pd.read_csv("camera_view.csv")
 camera_views = video_df["true_camera_view"].unique()
 
