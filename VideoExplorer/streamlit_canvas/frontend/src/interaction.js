@@ -35,8 +35,6 @@ function isAroundLine(pointer, coords){
 
 
 function onDrawLine(canvas, fixedPoints) {
-    let waterPipePoints = [];
-    let waterPipeLines = [];
     let line = null;
     let isDown = false;
     let isMetricDrawing = false;
@@ -65,7 +63,6 @@ function onDrawLine(canvas, fixedPoints) {
     function aroundWhichLine(pointer){
          let selectedIdx = -1;
         let minDist = -1;
-        console.log(lines)
         let nearPoint = null;
         for (let i in lines) {
             let lineData = lines[i];
@@ -89,8 +86,6 @@ function onDrawLine(canvas, fixedPoints) {
         if (selectedIdx < 0) {
             return {selectedIdx, nearPoint: null};
         }
-        console.log(nearPoint);
-        console.log("idx")
         return {lineIdx: selectedIdx, nearPoint};
     }
 
@@ -152,12 +147,6 @@ function onDrawLine(canvas, fixedPoints) {
                 y2: nearPoint.y
             })
             isMetricDrawing = false;
-            // let lineData = {
-            //     src: startJoint,
-            //     dest: pointIdx,
-            //     color: schemeTableau10[lines.length]
-            // }
-            // lines.push(lineData);
             line = null;
             let metric = {
 
@@ -257,84 +246,13 @@ function onDrawLine(canvas, fixedPoints) {
             y2: pointer.y
         });
         canvas.requestRenderAll();
-    }; //end mouse:move
+    }
+    //end mouse:move
     canvas.on('mouse:down', onMouseDown);
     canvas.on('mouse:dblclick', onDblClick);
     canvas.on('mouse:move', onMouseMove)
     canvas.on('mouse:over', onMouseOver);
     canvas.on('mouse:out', onMouseOut);
-    // canvas.on("mouse:down", function (event) {
-    //     var pointer = canvas.getPointer(event.e);
-    //     var positionX = pointer.x;
-    //     var positionY = pointer.y;
-    //
-    //     let selectedIdx = -1;
-    //     let minDist = -1;
-    //     // console.log(pointer)
-    //     for (let i in fixedPoints) {
-    //         let point = fixedPoints[i];
-    //         let {clicked, dist} = clickOnPoint(pointer, point);
-    //         if (clicked) {
-    //             if (minDist < 0 | minDist > dist) {
-    //                 dist = minDist;
-    //                 selectedIdx = i;
-    //             }
-    //         }
-    //     }
-    //     if (selectedIdx < 0) {
-    //         return;
-    //     }
-    //
-    //     // Add small circle as an indicative point
-    //     var circlePoint = new fabric.Circle({
-    //         radius: 5,
-    //         fill: "blue",
-    //         left: fixedPoints[selectedIdx][0],
-    //         top: fixedPoints[selectedIdx][1],
-    //         selectable: false,
-    //         originX: "center",
-    //         originY: "center",
-    //         hoverCursor: "auto"
-    //     });
-    //
-    //     canvas.add(circlePoint);
-    //
-    //     // Store the points to draw the lines
-    //     waterPipePoints.push(circlePoint);
-    //     console.log(waterPipePoints);
-    //     if (waterPipePoints.length > 1) {
-    //         // Just draw a line using the last two points, so we don't need to clear
-    //         // and re-render all the lines
-    //         var startPoint = waterPipePoints[waterPipePoints.length - 2];
-    //         var endPoint = waterPipePoints[waterPipePoints.length - 1];
-    //
-    //         var waterLine = new fabric.Line(
-    //             [
-    //                 startPoint.get("left"),
-    //                 startPoint.get("top"),
-    //                 endPoint.get("left"),
-    //                 endPoint.get("top")
-    //             ],
-    //             {
-    //                 stroke: "blue",
-    //                 strokeWidth: 4,
-    //                 hasControls: false,
-    //                 hasBorders: false,
-    //                 selectable: false,
-    //                 lockMovementX: true,
-    //                 lockMovementY: true,
-    //                 hoverCursor: "default",
-    //                 originX: "center",
-    //                 originY: "center"
-    //             }
-    //         );
-    //
-    //         waterPipeLines.push(waterLine);
-    //
-    //         canvas.add(waterLine);
-    //     }
-    // });
-
 }
 
 export {onDrawLine}

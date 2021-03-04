@@ -6,11 +6,8 @@ import './App.css';
 import {onDrawLine} from './interaction';
 import {IEvent} from "fabric/fabric-impl";
 import {type} from "os";
+import {keypointConfigs, auxiliaryKeypointConfigs, auxiliaryLineConfigs, PointConfig, CanvasPoint} from './constants';
 
-interface BodyJoint {
-    name: string,
-    coords: Array<number>
-}
 
 
 function CanvasComponent({args}: ComponentProps) {
@@ -56,81 +53,45 @@ function CanvasComponent({args}: ComponentProps) {
             });
             return circle
         }
-
-        const bodyJoints: BodyJoint[] = [
-            {
-                name: "head",
-                coords: [200, 50]
-            },
-            {
-                name: "leftHand",
-                coords: [100, 100]
-            },
-            {
-                name: "rightHand",
-                coords: [300, 100]
-            },
-            {
-                name: "leftFoot",
-                coords: [100, 300]
-            },
-            {
-                name: "rightFoot",
-                coords: [300, 300]
-            },
-            {
-                name: "upSpine",
-                coords: [200, 150]
-            },
-            {
-                name: "downSpine",
-                coords: [200, 250]
+        let transformCoords = (coords: Array<number>)=>{
+            return [coords[0] * 400, coords[1] * 400];
+        }
+        let keypointsOnCanvas = keypointConfigs.map(d=>{
+            return {
+                ...d,
+                coords: transformCoords(d.coords)
             }
-        ]
+        });
 
-        let pointCoords = {
-            "leftHand": [100, 100],
-            "rightHand": [300, 100],
-            "leftFoot": [100, 300],
-            "rightFoot": [300, 300],
-            "head": [200, 50],
-            "upSpine": [200, 150],
-            "downSpine": [200, 250]
+        let allPointConfigs: Array<PointConfig> = [...keypointConfigs, ...auxiliaryKeypointConfigs];
+        for (let lineConfig of auxiliaryLineConfigs){
+            let src = allPointConfigs.filter(d=>d.name===lineConfig.src)[0];
+            let srcCoords = transformCoords(src.coords)
+            let dest = allPointConfigs.filter(d=>d.name===lineConfig.dest)[0];
+            let destCoords = transformCoords(dest.coords)
+            let lineCoords = [...srcCoords, ...destCoords];
+            let line = makeLine(lineCoords);
+            canvas.add(line);
         }
 
+        // let line = makeLine([200, 50, 200, 150]),
+        //     line2 = makeLine([100, 100, 200, 150]),
+        //     line3 = makeLine([300, 100, 200, 150]),
+        //     line4 = makeLine([200, 150, 200, 250]),
+        //     line5 = makeLine([100, 300, 200, 250]),
+        //     line6 = makeLine([300, 300, 200, 250]);
+        // canvas.add(line, line2, line3, line4, line5, line6);
 
-        // let leftHand = makeCircle([100, 100])
-        // let rightHand = makeCircle([300, 100])
-
-        // let leftFoot = makeCircle([100, 300])
-
-        // let rightFoot = makeCircle([300, 300])
-        // let upSpine = makeCircle([200, 150])
-        // let downSpine = makeCircle([200, 250]);
-        let line = makeLine([200, 50, 200, 150]),
-            line2 = makeLine([100, 100, 200, 150]),
-            line3 = makeLine([300, 100, 200, 150]),
-            line4 = makeLine([200, 150, 200, 250]),
-            line5 = makeLine([100, 300, 200, 250]),
-            line6 = makeLine([300, 300, 200, 250]);
-        canvas.add(line, line2, line3, line4, line5, line6);
-        for (let bodyJoint of bodyJoints){
-            let coords = bodyJoint.coords;
+        for (let keypointConfig of keypointConfigs){
+            let coords = keypointConfig.coords;
+            coords = [coords[0] * 400, coords[1]*400];
             let circle = makeCircle(coords);
             let coverCircle = makeCoveringCircle(coords)
             canvas.add(circle);
             canvas.add(coverCircle);
-
         }
-        // canvas.add(headCircle);
-        // canvas.add(leftHand)
-        // canvas.add(rightHand)
-        // canvas.add(leftFoot)
-        // canvas.add(rightFoot)
-        // canvas.add(upSpine)
-        // canvas.add(downSpine)
 
-        onDrawLine(canvas, bodyJoints);
+        onDrawLine(canvas, keypointsOnCanvas);
 
     }, [])
 

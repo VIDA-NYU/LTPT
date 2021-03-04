@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from matplotlib import pyplot
+from streamlit_canvas import component_func as st_canvas
+
 ##############
 # Setting up data and paths
 img_path = Path("../../../baseball-analysis/videos/video_images")
@@ -42,6 +44,7 @@ def main():
         filtered_df = filtered_df[filtered_df["true_camera_view"] != filtered_df["pred_camera_view"]]
     filtered_df = filtered_df.iloc[:3*10]
     plot_image_grid(filtered_df, 3)
+    st_canvas()
 
 
 ##############
