@@ -23,12 +23,10 @@ function isAroundLine(pointer, coords){
         x: coords[0] + v2[0] * t / d,
         y: coords[1] + v2[1] * t /d
     }
-    console.log(dist);
+
     if (dist > 10) {
         return {isAround: false, dist, lineNearPoint: null}
     } else {
-        console.log("sh")
-        console.log(nearPoint)
         return {isAround: true, dist, lineNearPoint: nearPoint}
     }
 }
@@ -66,12 +64,14 @@ function onDrawLine(canvas, fixedPoints) {
         let nearPoint = null;
         for (let i in lines) {
             let lineData = lines[i];
-            let src = parseInt(lineData.src);
-            let dest = parseInt(lineData.dest);
+            let src = lineData.src;
+            let dest = lineData.dest;
+            let srcPoint = fixedPoints.filter(d=>d.name===src)[0];
+            let destPoint = fixedPoints.filter(d=>d.name===dest)[0];
             let coords = [
-                fixedPoints[src].coords[0], fixedPoints[src].coords[1],
-                fixedPoints[dest].coords[0], fixedPoints[dest].coords[1]
-            ]
+                srcPoint.coords[0], srcPoint.coords[1],
+                destPoint.coords[0], destPoint.coords[1]
+            ];
             let point = fixedPoints[i];
             let {isAround, dist,  lineNearPoint} = isAroundLine(pointer, coords);
             if (isAround) {
@@ -99,8 +99,8 @@ function onDrawLine(canvas, fixedPoints) {
             })
             isDown = false;
             let lineData = {
-                src: startJoint,
-                dest: pointIdx,
+                src: fixedPoints[pointIdx].name,
+                dest: fixedPoints[startJoint].name,
                 color: schemeTableau10[lines.length]
             }
             lines.push(lineData);
@@ -139,7 +139,6 @@ function onDrawLine(canvas, fixedPoints) {
     }
     function finishDrawingMetric(pointer) {
         let {lineIdx, nearPoint} = aroundWhichLine(pointer);
-
         if (lineIdx >= 0) {
             line.setCoords();
             line.set({
@@ -223,7 +222,7 @@ function onDrawLine(canvas, fixedPoints) {
     };
 
     function onMouseOver(e) {
-        if (e && e.target && "radius" in e.target) {
+        if (e && e.target && "radius" in e.target && e.target.radius <= 20) {
             e.target.set('fill', 'red');
             e.target.set("opacity", 1)
         }
@@ -231,7 +230,7 @@ function onDrawLine(canvas, fixedPoints) {
     }
 
     function onMouseOut(e) {
-        if (e && e.target && "radius" in e.target) {
+        if (e && e.target && "radius" in e.target && e.target.radius <= 20) {
             e.target.set('fill', 'red');
             e.target.set("opacity", 0)
         }

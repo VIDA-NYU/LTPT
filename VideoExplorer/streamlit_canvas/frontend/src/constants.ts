@@ -6,10 +6,17 @@ interface CanvasPoint {
     name: string,
     coords: Array<number>
 }
+
 interface lineConfig {
     src: string,
     dest: string,
     type: string
+}
+
+interface ShapeConfig {
+    name: string,
+    type: string,
+    coords: Array<number>,
 }
 
 const pointsSource = {
@@ -36,7 +43,7 @@ const pointsSource = {
 const keypointConfigs: PointConfig[] = [
     {
         name: "Nose",
-        coords: [0.5, 0.15],
+        coords: [0.5, 0.115],
     },
     {
         name: "Neck",
@@ -92,19 +99,19 @@ const keypointConfigs: PointConfig[] = [
     },
     {
         name: "REye",
-        coords: [0.54, 0.1]
+        coords: [0.54, 0.07]
     },
     {
         name: "LEye",
-        coords: [0.46, 0.1]
+        coords: [0.46, 0.07]
     },
     {
         name: "REar",
-        coords: [0.57, 0.15]
+        coords: [0.6, 0.1]
     },
     {
         name: "LEar",
-        coords: [0.43, 0.15]
+        coords: [0.4, 0.1]
     }
 
 ]
@@ -123,6 +130,19 @@ let auxiliaryKeypointConfigs: Array<PointConfig> = [
         coords: [0.50,.26]
     }
 
+]
+
+let decorationShapeConfigs: Array<ShapeConfig> = [
+    {
+        name: "mouth",
+        type: "mouth",
+        coords: [0.5, 0.14]
+    },
+    {
+        name: "head",
+        type: "head",
+        coords: [0.5, 0.11]
+    }
 ]
 
 let auxiliaryLineConfigs = [
@@ -204,5 +224,5 @@ let auxiliaryLineConfigs = [
 
 let sampleData = [[0.18981481481481483, 0.3967391304347826], [0.1574074074074074, 0.44021739130434784], [0.1574074074074074, 0.44565217391304346], [0.17592592592592593, 0.532608695652174], [0.2175925925925926, 0.5543478260869565], [0.1527777777777778, 0.43478260869565216], [0.1712962962962963, 0.5217391304347826], [0.19907407407407407, 0.5380434782608695], [0.12962962962962962, 0.6032608695652174], [0.21296296296296297, 0.6032608695652174], [0.1388888888888889, 0.6902173913043478], [0.125, 0.6032608695652174], [0.18981481481481483, 0.5978260869565217], [0.12962962962962962, 0.6793478260869565], [0.18055555555555555, 0.391304347826087], [0.0, 0.0], [0.16666666666666666, 0.3967391304347826], [0.0, 0.0]]
 
-export {pointsSource, keypointConfigs, auxiliaryKeypointConfigs, auxiliaryLineConfigs}
-export type { PointConfig, CanvasPoint }
+export {pointsSource, keypointConfigs, auxiliaryKeypointConfigs, auxiliaryLineConfigs, decorationShapeConfigs}
+export type { PointConfig, CanvasPoint, ShapeConfig }

@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from matplotlib import pyplot
 from streamlit_canvas import component_func as st_canvas
+from canvas_interaction import plot_canvas, build_metric_func, get_fake_data
 
 ##############
 # Setting up data and paths
@@ -25,6 +26,7 @@ def plot_image_grid(df, n_columns):
             pred_class = df["pred_camera_view"].iloc[img_idx]
             img = pyplot.imread(path)
             cols[col_idx].write("**Pred**: "+ pred_class)
+            cols[col_idx].write("*Metric*: " + "0")
             cols[col_idx].image(img, width=200)
 
 
@@ -33,6 +35,11 @@ def plot_image_grid(df, n_columns):
 def main(): 
     st.title("Video Tool - Camera Position Explorer")
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
+    canvas_result = plot_canvas()
+    fake_data = get_fake_data()
+    if canvas_result and "metric" in canvas_result:
+        f = build_metric_func(canvas_result)
+        st.write("metric: " + str(f(fake_data)))
     true_camera_view = st.selectbox("Select camera position", camera_views)
     correct_pred_option = st.radio(
         "Show Predictions",
@@ -44,7 +51,6 @@ def main():
         filtered_df = filtered_df[filtered_df["true_camera_view"] != filtered_df["pred_camera_view"]]
     filtered_df = filtered_df.iloc[:3*10]
     plot_image_grid(filtered_df, 3)
-    st_canvas()
 
 
 ##############
