@@ -20,6 +20,7 @@ try:
     client = pymongo.MongoClient(conn_path)
     db = client.ltpt
     camera_views = db["videos"].distinct("predicted_view")
+    games = db["videos"].distinct("game")
 except Exception as e:
     st.write("# MongoDB Connection Error");
     st.write(str(e))
@@ -29,12 +30,12 @@ except Exception as e:
 map_letter_view = {"A": "Behind Pitcher", "B": "Batter", "C": "Pitcher", "D": "Behind Home"}
 map_view_letter = {"Behind Pitcher": "A", "Batter": "B", "Pitcher": "C", "Behind Home": "D"}
 
-def query_db(true_view, correct):
+def query_db(true_view, correct, game_id):
     true_letter = map_view_letter[true_view]
     if correct:
-        return db["videos"].find({"predicted_view": true_view, "view": true_letter})
+        return db["videos"].find({"predicted_view": true_view, "view": true_letter, "game":game_id})
     else:
-        return db["videos"].find({"predicted_view": {"$ne": true_view}, "view": true_letter})
+        return db["videos"].find({"predicted_view": {"$ne": true_view}, "view": true_letter, "game":game_id})
 
 ##############
 # Image Grid
@@ -60,12 +61,13 @@ def plot_image_grid(query, n_columns):
 def main(): 
     st.title("Video Tool - Camera Position Explorer")
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
+    game_id = st.selectbox("Select game", games)
     true_camera_view = st.selectbox("Select camera position", camera_views)
     correct_pred_option = st.radio(
         "Show Predictions",
         ("Correct", "Incorrect"))
     correct =  correct_pred_option == "Correct"
-    query = query_db(true_view=true_camera_view, correct=correct).limit(3*5) # 5 rows
+    query = query_db(true_camera_view, correct, game_id).limit(3*5) # 5 rows
     plot_image_grid(query, 3)
 
 
