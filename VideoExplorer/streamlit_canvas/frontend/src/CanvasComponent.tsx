@@ -24,6 +24,11 @@ function CanvasComponent({args}: ComponentProps) {
         let circleFill = "#dbe2ef"
         let circleStroke = "#666"
         let lineColor = "red"
+        let skeletonColor = "#393e46"
+        let hintColor = "#eeeeee"
+        let styles = {
+            hintColor, skeletonColor
+        }
         function makeCircle(coords: Array<number>){
             let circle = new fabric.Circle({
                 radius: 5, fill: circleFill, left: coords[0], top: coords[1], stroke: circleStroke, selectable:false,
@@ -36,8 +41,8 @@ function CanvasComponent({args}: ComponentProps) {
             // coords = coords.map(d=>d+2.5)
             return new fabric.Line(coords, {
                 fill: 'red',
-                stroke: lineColor,
-                strokeWidth: 5,
+                stroke: skeletonColor,
+                strokeWidth: 3,
                 selectable: false,
                 evented: false,
                 originX: "center",
@@ -46,7 +51,7 @@ function CanvasComponent({args}: ComponentProps) {
         }
         function makeCoveringCircle(coords: Array<number>){
             let circle = new fabric.Circle({
-                radius: 20, fill: circleFill, left: coords[0], top: coords[1], stroke: circleStroke, selectable:false,
+                radius: 20, fill: hintColor, left: coords[0], top: coords[1], stroke: styles.skeletonColor, selectable:false,
                 originX: "center",
                 originY: "center",
                 opacity: 0.01,
@@ -59,7 +64,7 @@ function CanvasComponent({args}: ComponentProps) {
                 fill: undefined,
                 left: config.coords[0],
                 top: config.coords[1],
-                stroke: lineColor,
+                stroke: skeletonColor,
                 selectable: false,
                 originX: "center",
                 originY: "center",
@@ -74,7 +79,7 @@ function CanvasComponent({args}: ComponentProps) {
                 fill: undefined,
                 left: config.coords[0],
                 top: config.coords[1],
-                stroke: lineColor,
+                stroke: skeletonColor,
                 selectable: false,
                 originX: "center",
                 originY: "center"
@@ -102,6 +107,7 @@ function CanvasComponent({args}: ComponentProps) {
                 coords: transformCoords(d.coords),
             }
         })
+
         for (let config of decorationShapeOnCanvas){
             if (config.type === "mouth"){
                 makeMouth(config);
@@ -109,7 +115,14 @@ function CanvasComponent({args}: ComponentProps) {
                 makeHeadCircle(config);
             }
         }
-
+        for (let keypointConfig of keypointConfigs){
+            let coords = keypointConfig.coords;
+            coords = [coords[0] * 400, coords[1]*400];
+            let circle = makeCircle(coords);
+            let coverCircle = makeCoveringCircle(coords)
+            canvas.add(circle);
+            canvas.add(coverCircle);
+        }
 
         let allPointConfigs: Array<PointConfig> = [...keypointConfigs, ...auxiliaryKeypointConfigs];
         for (let lineConfig of auxiliaryLineConfigs){
@@ -123,16 +136,9 @@ function CanvasComponent({args}: ComponentProps) {
         }
 
 
-        for (let keypointConfig of keypointConfigs){
-            let coords = keypointConfig.coords;
-            coords = [coords[0] * 400, coords[1]*400];
-            let circle = makeCircle(coords);
-            let coverCircle = makeCoveringCircle(coords)
-            canvas.add(circle);
-            canvas.add(coverCircle);
-        }
 
-        onDrawLine(canvas, keypointsOnCanvas);
+
+        onDrawLine(canvas, keypointsOnCanvas, styles);
 
     }, [])
 

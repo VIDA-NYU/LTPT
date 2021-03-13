@@ -5,7 +5,8 @@ from pathlib import Path
 from matplotlib import pyplot
 from streamlit_canvas import component_func as st_canvas
 from canvas_interaction import plot_canvas, build_metric_func, get_fake_data
-
+from data import load_meta_by_json as load_meta
+from charts import make_histogram
 ##############
 # Setting up data and paths
 img_path = Path("../../../baseball-analysis/videos/video_images")
@@ -30,16 +31,44 @@ def plot_image_grid(df, n_columns):
             cols[col_idx].image(img, width=200)
 
 
+meta_data = load_meta()
+
+data = pd.DataFrame(np.random.normal(42, 10, (200, 1)), columns=["x"])
+
+
 ##############
 # Streamlit Dashboard
-def main(): 
+def main():
     st.title("Video Tool - Camera Position Explorer")
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
-    canvas_result = plot_canvas()
-    fake_data = get_fake_data()
+    # canvas_result = plot_canvas()
+    my_expander = st.beta_expander("Draw Metrics", expanded=True)
+    left_column, right_column = st.beta_columns(2)
+    with left_column:
+        canvas_result = plot_canvas()
+
     if canvas_result and "metric" in canvas_result:
         f = build_metric_func(canvas_result)
-        st.write("metric: " + str(f(fake_data)))
+        values = []
+        for row in video_df.iterrows():
+            file_id = row[1]['file'][:-4]
+            meta = meta_data[file_id]
+            if "pose_data" in meta:
+                metric_value = f(meta['pose_data'])
+                values.append([file_id, metric_value])
+        values = pd.DataFrame(values)
+        values.columns = ['file', "x"]
+        # hist_values = np.histogram(values, bins="auto")
+        # fig, ax = pyplot.subplots()
+        # ax.hist(values, bins=20)
+        # st.pyplot(fig)
+        # st.bar_chart(hist_values[0])
+        st.write(values)
+        with right_column:
+            if len(values) > 0:
+                hist_event = make_histogram(data)
+                st.write(hist_event)
+
     true_camera_view = st.selectbox("Select camera position", camera_views)
     correct_pred_option = st.radio(
         "Show Predictions",

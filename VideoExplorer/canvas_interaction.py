@@ -1,24 +1,23 @@
 from streamlit_canvas import component_func as st_canvas, use_component
 import numpy as np
-kps_source={
+kps_source = {
     'Nose': 0,
-    'Neck': 1,
-    'RShoulder': 2,
-    'RElbow':3,
-    'RWrist':4,
-    'LShoulder':5,
-    'LElbow':6,
-    'LWrist':7,
-    'RHip':8,
-    'RKnee': 9,
-    'RAnkle':10,
-    'LHip':11,
-    'LKnee':12,
-    'LAnkle':13,
-    'REye': 14,
-    'LEye': 15,
-    'REar': 16,
-    'LEar' :17,
+    'RShoulder': 1,
+    'RElbow': 2,
+    'RWrist': 3,
+    'LShoulder': 4,
+    'LElbow': 5,
+    'LWrist': 6,
+    'RHip': 7,
+    'RKnee': 8,
+    'RAnkle': 9,
+    'LHip': 10,
+    'LKnee': 11,
+    'LAnkle': 12,
+    'REye': 13,
+    'LEye': 14,
+    'REar': 15,
+    'LEar': 16,
     # 'Background': 18,
 }
 
@@ -107,6 +106,10 @@ def get_fake_data():
 def radian_to_angle(radian):
     return 180 * radian / np.pi
 
+
+
+
+
 if __name__ == '__main__':
     fake_data = get_fake_data()
     sample_result = {
@@ -130,3 +133,5 @@ if __name__ == '__main__':
     f = build_metric_func(sample_result)
     value = f(fake_data)
     print(value)
+
+

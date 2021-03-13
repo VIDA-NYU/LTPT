@@ -21,23 +21,22 @@ interface ShapeConfig {
 
 const pointsSource = {
     'Nose': 0,
-    'Neck': 1,
-    'RShoulder': 2,
-    'RElbow': 3,
-    'RWrist': 4,
-    'LShoulder': 5,
-    'LElbow': 6,
-    'LWrist': 7,
-    'RHip': 8,
-    'RKnee': 9,
-    'RAnkle': 10,
-    'LHip': 11,
-    'LKnee': 12,
+    'RShoulder': 1,
+    'RElbow': 2,
+    'RWrist': 3,
+    'LShoulder': 4,
+    'LElbow': 5,
+    'LWrist': 6,
+    'RHip': 7,
+    'RKnee': 8,
+    'RAnkle': 9,
+    'LHip': 10,
+    'LKnee': 11,
     'LAnkle': 13,
-    'REye': 14,
-    'LEye': 15,
-    'REar': 16,
-    'LEar': 17,
+    'REye': 13,
+    'LEye': 14,
+    'REar': 15,
+    'LEar': 16,
 }
 
 const keypointConfigs: PointConfig[] = [
@@ -45,33 +44,33 @@ const keypointConfigs: PointConfig[] = [
         name: "Nose",
         coords: [0.5, 0.115],
     },
-    {
-        name: "Neck",
-        coords: [0.5, 0.24]
-    },
+    // {
+    //     name: "Neck",
+    //     coords: [0.5, 0.24]
+    // },
     {
         name: "RShoulder",
-        coords: [0.6, 0.28]
+        coords: [0.6, 0.25]
     },
     {
         name: "LShoulder",
-        coords: [0.4, 0.28]
+        coords: [0.4, 0.25]
     },
     {
         name: "RElbow",
-        coords: [0.7, 0.26]
+        coords: [0.7, 0.33]
     },
     {
         name: "LElbow",
-        coords: [0.3, 0.26]
+        coords: [0.3, 0.33]
     },
     {
         name: "RWrist",
-        coords: [0.75, 0.26],
+        coords: [0.7, 0.48],
     },
     {
         name: "LWrist" ,
-        coords: [0.25, 0.26]
+        coords: [0.3, 0.48]
     },
     {
         name: "RHip",

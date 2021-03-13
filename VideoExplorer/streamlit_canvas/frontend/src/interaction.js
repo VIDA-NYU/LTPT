@@ -32,7 +32,7 @@ function isAroundLine(pointer, coords){
 }
 
 
-function onDrawLine(canvas, fixedPoints) {
+function onDrawLine(canvas, fixedPoints, styles) {
     let line = null;
     let isDown = false;
     let isMetricDrawing = false;
@@ -223,15 +223,15 @@ function onDrawLine(canvas, fixedPoints) {
 
     function onMouseOver(e) {
         if (e && e.target && "radius" in e.target && e.target.radius <= 20) {
-            e.target.set('fill', 'red');
-            e.target.set("opacity", 1)
+            e.target.set('fill', styles.hintColor);
+            e.target.set("opacity", 0.6)
         }
         canvas.renderAll();
     }
 
     function onMouseOut(e) {
         if (e && e.target && "radius" in e.target && e.target.radius <= 20) {
-            e.target.set('fill', 'red');
+            e.target.set('fill', styles.hintColor);
             e.target.set("opacity", 0)
         }
         canvas.renderAll();
