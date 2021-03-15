@@ -147,6 +147,10 @@ class GUI():
 
         if os.path.isdir(new_dir):
             self.ui.folderLE.setText(new_dir)
+
+            if self.ui.autoSearchCB.isChecked():
+                self.search()
+
             return "New folder \'%s\'" % new_dir
         else:
             raise ValueError("Invalid directory: \'%s\'" % new_dir)
@@ -174,7 +178,11 @@ class GUI():
         self.filename = self.ui.filenameCB.currentText()
         print(self.filename)
 
-        self.img = pyplot.imread(self.folder + "/" + self.filename)
+        path = self.folder + "/" + self.filename
+        if self.filename == "" or not os.path.exists(path):
+            return "No file selected"
+
+        self.img = pyplot.imread(path)
 
         if self.ui.autoQuantizeCB.isChecked():
             self.quantize()
@@ -249,6 +257,9 @@ class GUI():
             if self.ctrl:
                 self.mapped_colors[i, :] = [0, 0, 255]
                 self.mapping[i] = 3
+            elif self.alt:
+                self.mapped_colors[i, :] = [255, 0, 255]
+                self.mapping[i] = 5
 
         if button == MOUSE_RIGHT:
             if self.alt:
@@ -295,6 +306,7 @@ class GUI():
 
         gray = np.zeros(img.shape[:2], dtype=np.uint8)
         gray[...] = np.sum(img, axis=2, dtype=np.uint8)
+        gray[np.equal(gray, 4)] = 5
         gray[np.equal(gray, 6)] = 4
 
         return gray
@@ -305,7 +317,8 @@ class GUI():
                            [255, 0, 0],
                            [0, 255, 0],
                            [0, 0, 255],
-                           [255, 255, 255]], dtype=np.uint8)
+                           [255, 255, 255],
+                           [255, 0, 255]], dtype=np.uint8)
 
         img.reshape((-1, 3))[...] = colors[gray.ravel(), :]
 
@@ -326,7 +339,7 @@ class GUI():
         self.assigned = self.map(self.labels, self.mapped_colors)
         self.gray = self.to_gray(np.copy(self.assigned))
 
-        if self.ui.majorVoteCB.isChecked():
+        if self.ui.majorityVoteCB.isChecked():
             # for i in range(2 if self.ui.twiceCB.isChecked() else 1):
             counts = filters.rank.windowed_histogram(self.gray, np.ones((3, 3), dtype=bool))
             major = counts.argmax(axis=-1)
@@ -364,7 +377,7 @@ class GUI():
 
         self.mapped[self.mapped == 127] = 0
 
-        if self.ui.majorVoteCB.isChecked():
+        if self.ui.majorityVoteCB.isChecked():
             gray = None
             for i in range(2 if self.ui.twiceCB.isChecked() else 1):
                 if gray is None:
