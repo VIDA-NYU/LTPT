@@ -23,8 +23,8 @@ MOUSE_RIGHT = 3
 class QFigure(QtWidgets.QWidget):
     def __init__(self, title='', toolbar=True, show=False):
         super().__init__()
-        self.setMinimumWidth(480)
-        self.setMinimumHeight(240)
+        self.setMinimumWidth(320)
+        self.setMinimumHeight(160)
         self.fig = Figure()
         self.ax = None
         self.cd()
@@ -42,7 +42,7 @@ class QFigure(QtWidgets.QWidget):
 
         if show:
             # Set so that Figure windows doesn't prevent the app termination when Main window is closed
-            self.setAttribute(QtCore.Qt.WA_QuitOnClose, False)
+            self.setAttribute(QtCore.Qt.WA_QuitOn180Close, False)
             self.show()
 
     def clear(self, cd=True):
@@ -66,14 +66,15 @@ class GUI():
         self.ui = uic.loadUi('segmentator.ui')
         self.ui.resize(1600, 900)
         self.ctrl, self.shift, self.alt = False, False, False
+        self.img_view, self.colors_view = None, None
         self.sz, self.mode = 100, ""
 
         self.fimg = QFigure('img')
         self.fcolors = QFigure('colors', toolbar=False)
         self.flayout = QtWidgets.QVBoxLayout()
-        self.flayout.addWidget(self.fimg, 6)
+        self.flayout.addWidget(self.fimg, 19)
         self.flayout.addWidget(self.fcolors, 1)
-        self.ui.layout.addLayout(self.flayout, 6)
+        self.ui.layout.addLayout(self.flayout, 9)
         self.fimg.canvas.mpl_connect('button_press_event', self.on_image_click)
         self.fcolors.canvas.mpl_connect('button_press_event', self.on_color_click)
 
@@ -211,19 +212,24 @@ class GUI():
 
         return img
 
-    def plot_img(self, fig, img):
-        fig.clear()
-        if img is not None:
-            fig.ax.imshow(img)
-            fig.fig.tight_layout()
+    def plot_img(self, fig, img, view=None):
+        if view is not None:
+            view.set_data(img)
             fig.redraw()
+        else:
+            fig.clear()
+            if img is not None:
+                view = fig.ax.imshow(img)
+                fig.fig.tight_layout()
+                fig.redraw()
+        return view
 
-    def plot_mapped(self):
+    def plot_mapped(self, from_scratch=True):
         self.mapped = self.map(self.labels, self.mapped_colors)
         self.palette = self.gen_palette(self.mapped_colors)
 
-        self.plot_img(self.fimg, self.mapped)
-        self.plot_img(self.fcolors, self.palette)
+        self.img_view = self.plot_img(self.fimg, self.mapped, None if from_scratch else self.img_view)
+        self.colors_view = self.plot_img(self.fcolors, self.palette, None if from_scratch else self.colors_view)
 
     def on_quantize(self):
         self.mode = ""
@@ -274,7 +280,7 @@ class GUI():
         print("Image:", e.xdata, e.ydata, e.button, self.ctrl, self.shift, self.alt)
 
         if e.xdata and e.ydata and (self.ctrl or self.alt) and self.mode != "":
-            r, c = int(e.ydata), int(e.xdata)
+            r, c = int(e.ydata + 0.5), int(e.xdata + 0.5)
 
             if self.mode == "mapping":
                 color = self.quantized[r, c]
@@ -286,19 +292,19 @@ class GUI():
             print(i, color, self.colors[i, :])
 
             self.map_color(i, e.button)
-            self.plot_mapped()
+            self.plot_mapped(from_scratch=False)
 
     def on_color_click(self, e):
         self.update_modifiers()
         print("Color:", e.xdata, e.ydata, e.button, self.ctrl, self.shift, self.alt)
 
         if e.xdata and e.ydata and (self.ctrl or self.alt) and self.mode == "mapping":
-            i = int(e.xdata) // self.sz
+            i = int(e.xdata + 0.5) // self.sz
             color = self.colors[i, :]
             print(i, color)
 
             self.map_color(i, e.button)
-            self.plot_mapped()
+            self.plot_mapped(from_scratch=False)
 
     def to_gray(self, img):
         img[np.nonzero(img)] = 1
@@ -354,7 +360,7 @@ class GUI():
             # self.plot_img(self.fimg, self.gray)
 
         new_labels, m = measure.label(self.gray, return_num=True)
-        self.labels, self.n, self.sz = new_labels.ravel(), m + 1, 2
+        self.labels, self.n, self.sz = new_labels.ravel(), m + 1, 1
         self.colors = np.zeros((self.n, 3), dtype=np.uint8)
 
         props = measure.regionprops(new_labels)
