@@ -1,0 +1,21 @@
+video padding
+3367B  0
+3370B  5
+3387B  0 (batter disappeared at 221 frane)
+3390B  0 (missing kps for catcher) 5(more noises)
+3367C
+3370C 0
+3387C 0
+3390C 0
+)
+
+1.add more visualization (query engine): skeleton metric+
+2, sharpen architecture:
+metadata (not good term)--> feature extraction: novelty
+3. novelty: select some thing to interact with
+4. interaction: calibration (annotaton), skeleton metric
+
+user case:
+1. define metric is better than w/o interactive metic
+
+
