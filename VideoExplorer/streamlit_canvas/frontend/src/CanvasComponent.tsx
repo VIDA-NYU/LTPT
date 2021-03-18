@@ -11,7 +11,8 @@ import {keypointConfigs, auxiliaryKeypointConfigs, auxiliaryLineConfigs, PointCo
 
 
 function CanvasComponent({args}: ComponentProps) {
-    const [canvas, setCanvas] = useState(new fabric.Canvas(""))
+    const [canvasRef, setCanvas] = useState(new fabric.Canvas(""))
+    const [draw, setDraw] = useState(0)
     useEffect(() => {
         const c = new fabric.Canvas("canvas", {
             enableRetinaScaling: false,
@@ -136,12 +137,12 @@ function CanvasComponent({args}: ComponentProps) {
         }
 
 
-
-
         onDrawLine(canvas, keypointsOnCanvas, styles);
 
     }, [])
-
+    // useEffect(()=>{
+    //     canvasRef.clear();
+    // }, [args['operation']])
     let canvasHeight = 400;
     let canvasWidth = 400;
     return (

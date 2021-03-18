@@ -2,6 +2,7 @@ import altair as alt
 import streamlit as st
 import pandas as pd
 import numpy as np
+from vega_datasets import data
 
 from streamlit_vega_lite import vega_lite_component, altair_component
 
@@ -16,6 +17,28 @@ def make_histogram(data):
         .encode(alt.X("x:Q", bin=True), y="count()")
         .add_selection(brushed)
     )
-    event_dict = altair_component(altair_chart=config)
-    return event_dict
+    return config
+    # return event_dict
+
+
+def process_hist_event(event, values):
+    brush_range = event['x']
+    filtered_values = values[(values['x'] > brush_range[0]) & (values['x'] < brush_range[1])]
+    return filtered_values
+
+
+def make_parallel_distribution(datam):
+    source = data.iris()
+    config = (alt.Chart(source).transform_window(
+        index='count()'
+    ).transform_fold(
+        ['petalLength', 'petalWidth', 'sepalLength', 'sepalWidth']
+    ).mark_line().encode(
+        x='key:N',
+        y='value:Q',
+        color='species:N',
+        detail='index:N',
+        opacity=alt.value(0.5)
+    ).properties(width=500))
+    return config
 
