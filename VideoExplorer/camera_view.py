@@ -10,7 +10,7 @@ from data import load_meta_by_json as load_meta, meta_data
 from charts import make_histogram, process_hist_event, make_parallel_distribution
 ##############
 # Setting up data and paths
-img_path = Path("../../../baseball-analysis/videos/video_images")
+img_path = Path("../../videos/video_images")
 video_df = pd.read_csv("camera_view.csv")
 camera_views = video_df["true_camera_view"].unique()
 camera_views = camera_views[1:3]
