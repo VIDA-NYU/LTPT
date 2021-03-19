@@ -30,7 +30,6 @@ def extract_vector(line, data):
 
     src_pos = data[kps_source[line['src']]]
     dest_pos = data[kps_source[line['dest']]]
-    print(src_pos, dest_pos)
     src_pos = np.array(src_pos)
     dest_pos = np.array(dest_pos)
     v = dest_pos - src_pos
@@ -73,19 +72,18 @@ def format_lines(line0, line1):
 
 
 @st.cache
-def build_metric_func(result):
-    if not result or 'metric' not in result:
+def build_metric_func(metric):
+    if not metric:
         return lambda x: 0
-    metric = result['metric']
-    lines = result['data']
+
 
     def _f(data):
-        if metric['type'] == "angle":
+        if metric['type'] == "Angle":
             vectoddrs = []
-            selected_lines = []
-            for line_idx in metric['lines']:
-                line = lines[int(line_idx)]
-                selected_lines.append(line)
+            selected_lines = metric['lines']
+            # for line_idx in metric['lines']:
+            #     line = lines[int(line_idx)]
+            #     selected_lines.append(line)
             line0, line1 = format_lines(*selected_lines)
             v0 = extract_vector(line0, data)
             v1 = extract_vector(line1, data)
@@ -94,8 +92,8 @@ def build_metric_func(result):
             angle = radian_to_angle(angle)
             return angle
         else:
-            line_idx = metric['lines'][0]
-            line = lines[line_idx]
+            line = metric['lines'][0]
+            # line = lines[int(line_idx)]
             vector = extract_vector(line, data)
             return calculate_vector_length(vector)
     return _f
@@ -160,4 +158,16 @@ class MetricManager:
     def add_metric(self, metric):
         self.metrics.append(metric)
 
+    def build_data(self, df, meta_data):
+        result_df = pd.DataFrame()
+        first = True
+        for i, metric in enumerate(self.metrics):
+            metric_df = calculate_metrics(metric, df, meta_data)
+            metric_df.columns = ['file_id', str(i)]
+            if first:
+                result_df = metric_df
+                first = False
+            else:
+                result_df = pd.concat([result_df, metric_df[str(i)]], axis=1)
+        return result_df
 metric_manager = MetricManager()

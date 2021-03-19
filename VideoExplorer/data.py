@@ -85,8 +85,8 @@ def load_meta_by_json():
         meta_data = json.load(fp)
         return meta_data
 def load_meta():
-    # client = MongoClient("mongodb+srv://guande:guandemongo@ltpt.qsvio.mongodb.net")
-    client = MongoClient()
+    client = MongoClient("mongodb+srv://guande:guandemongo@ltpt.qsvio.mongodb.net")
+    # client = MongoClient()
 
     print("db connected")
     db = client.ltpt
@@ -183,7 +183,7 @@ def extract_pose_data(pose_doc):
 if __name__ == '__main__':
     # save_remote_db_to_local()
     data = load_meta()
-    with open("meta.json", "w") as fp:
+    with open("meta-remote.json", "w") as fp:
         json.dump(data, fp)
     load_meta()
 meta_data = load_meta_by_json()

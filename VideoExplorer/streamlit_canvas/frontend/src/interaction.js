@@ -32,11 +32,11 @@ function isAroundLine(pointer, coords){
 }
 
 
-function onDrawLine(canvas, fixedPoints, styles) {
+var lines = [];
+function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
     let line = null;
     let isDown = false;
     let isMetricDrawing = false;
-    let lines = [];
     let startJoint = -1;
     let metricStartLine = -1;
     function aroundWhichPoint(pointer) {
@@ -101,13 +101,11 @@ function onDrawLine(canvas, fixedPoints, styles) {
             let lineData = {
                 src: fixedPoints[pointIdx].name,
                 dest: fixedPoints[startJoint].name,
-                color: schemeTableau10[lines.length]
+                color: "grey"
             }
             lines.push(lineData);
             line = null;
-            Streamlit.setComponentValue({
-                data: lines
-            })
+
         }
     }
 
@@ -116,7 +114,7 @@ function onDrawLine(canvas, fixedPoints, styles) {
         let pointIdx = aroundWhichPoint(pointer);
         if (pointIdx >= 0) {
             line = new fabric.Line(points, {
-                stroke: schemeTableau10[lines.length],
+                stroke: "grey",
                 hasControls: false,
                 hasBorders: false,
                 lockMovementX: false,
@@ -151,17 +149,19 @@ function onDrawLine(canvas, fixedPoints, styles) {
 
             }
             if(lineIdx === metricStartLine){
-                metric['type'] = "distance";
-                metric['lines'] = [lineIdx]
+                metric['type'] = "Distance";
+                metric['lines'] = [lineIdx].map(d=>lines[d])
             }else{
-                metric['type'] = "angle";
-                metric['lines'] = [lineIdx, metricStartLine]
+                metric['type'] = "Angle";
+                metric['lines'] = [lineIdx, metricStartLine].map(d=>lines[d])
             }
+            addAMetric({
+                type: metric['type'],
+                name: "default name",
+                lines: metric['lines']
 
-            Streamlit.setComponentValue({
-                data: lines,
-                metric
             })
+
         }
     }
     function startDrawingMetric(pointer){
@@ -169,7 +169,7 @@ function onDrawLine(canvas, fixedPoints, styles) {
         let {lineIdx, nearPoint} = aroundWhichLine(pointer);
         if (lineIdx >= 0) {
             line = new fabric.Line(points, {
-                stroke: schemeTableau10[lines.length],
+                stroke: schemeTableau10[lines.length % 10],
                 hasControls: false,
                 hasBorders: false,
                 lockMovementX: false,
@@ -202,6 +202,9 @@ function onDrawLine(canvas, fixedPoints, styles) {
     };
 
     function onMouseDown(options) {
+        // console.log(isDown);
+        // console.log(isMetricDrawing);
+        console.log(lines)
         if (isDown) {
             let pointer = canvas.getPointer(options.e);
             finishLine(pointer)

@@ -1,18 +1,66 @@
 import {withStreamlitConnection, StreamlitComponentBase, Streamlit, ComponentProps} from "streamlit-component-lib"
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {fabric} from "fabric"
+import CSS from 'csstype';
 
 import './App.css';
 import {onDrawLine} from './interaction';
+import {MetricTable} from "./MetricTable"
 import {IEvent} from "fabric/fabric-impl";
 import {type} from "os";
 import {keypointConfigs, auxiliaryKeypointConfigs, auxiliaryLineConfigs, PointConfig, CanvasPoint, decorationShapeConfigs, ShapeConfig} from './constants';
 
+enum MetricType {
+    Angle="Angle", Distance="Distance"
+}
+interface Line {
+    src: string,
+    dest: string,
+    color: string
+}
+interface Metric {
+    name: string,
+    type: MetricType,
+    lines: Array<Line>,
+    id?: number
 
+}
 
-function CanvasComponent({args}: ComponentProps) {
-    const [canvasRef, setCanvas] = useState(new fabric.Canvas(""))
-    const [draw, setDraw] = useState(0)
+function CanvasComponent({args} : ComponentProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [canvasObj, setCanvas] = useState(new fabric.Canvas("interaction-canvas", {
+        enableRetinaScaling: false,
+    }))
+    const [draw, setDraw] = useState(0);
+    const [metrics, setMetrics] = useState<Array<Metric>>([]);
+    const [metricCount, setMetricCount] = useState<number>(0)
+    let canvasHeight = 400;
+    let canvasWidth = 400;
+    let updateStatus = (metric: Metric) => {
+        metric.id = metricCount;
+        setMetrics([
+            ...metrics, metric
+        ])
+        setMetricCount(metricCount + 1);
+        Streamlit.setComponentValue({
+            // data: lines,
+            metrics: [...metrics, metric]
+        })
+    }
+    let skeletonColor = "#393e46"
+    let hintColor = "#eeeeee"
+    let styles = {
+        hintColor, skeletonColor
+    }
+    let transformCoords = (coords: Array<number>)=>{
+        return [coords[0] * canvasWidth, coords[1] * canvasHeight];
+    }
+    let keypointsOnCanvas = keypointConfigs.map(d=>{
+        return {
+            ...d,
+            coords: transformCoords(d.coords)
+        }
+    });
     useEffect(() => {
         const c = new fabric.Canvas("canvas", {
             enableRetinaScaling: false,
@@ -20,16 +68,13 @@ function CanvasComponent({args}: ComponentProps) {
         const canvas = new fabric.Canvas("interaction-canvas", {
             enableRetinaScaling: false,
         })
+        // let canvas = canvasObj
         setCanvas(canvas);
         Streamlit.setFrameHeight()
         let circleFill = "#dbe2ef"
         let circleStroke = "#666"
         let lineColor = "red"
-        let skeletonColor = "#393e46"
-        let hintColor = "#eeeeee"
-        let styles = {
-            hintColor, skeletonColor
-        }
+
         function makeCircle(coords: Array<number>){
             let circle = new fabric.Circle({
                 radius: 5, fill: circleFill, left: coords[0], top: coords[1], stroke: circleStroke, selectable:false,
@@ -87,15 +132,8 @@ function CanvasComponent({args}: ComponentProps) {
             })
             canvas.add(circle);
         }
-        let transformCoords = (coords: Array<number>)=>{
-            return [coords[0] * 400, coords[1] * 400];
-        }
-        let keypointsOnCanvas = keypointConfigs.map(d=>{
-            return {
-                ...d,
-                coords: transformCoords(d.coords)
-            }
-        });
+
+
         let auxiliaryPointsOnCanvas = auxiliaryKeypointConfigs.map(d=>{
             return {
                 ...d,
@@ -118,7 +156,7 @@ function CanvasComponent({args}: ComponentProps) {
         }
         for (let keypointConfig of keypointConfigs){
             let coords = keypointConfig.coords;
-            coords = [coords[0] * 400, coords[1]*400];
+            coords = [coords[0] * canvasWidth, coords[1]*canvasHeight];
             let circle = makeCircle(coords);
             let coverCircle = makeCoveringCircle(coords)
             canvas.add(circle);
@@ -137,24 +175,69 @@ function CanvasComponent({args}: ComponentProps) {
         }
 
 
-        onDrawLine(canvas, keypointsOnCanvas, styles);
+        // onDrawLine(canvas, keypointsOnCanvas, styles, updateStatus);
 
-    }, [])
+    }, []);
+    useEffect(()=>{
+        onDrawLine(canvasObj, keypointsOnCanvas, styles, updateStatus)
+    }, [canvasObj, metrics]);
+    const div = useCallback(node => {
+        if (node !== null) {
+            console.log(node.getBoundingClientRect().height);
+            console.log(node.getBoundingClientRect().width);
+        }
+    }, []);
+
     // useEffect(()=>{
     //     canvasRef.clear();
     // }, [args['operation']])
-    let canvasHeight = 400;
-    let canvasWidth = 400;
+    function describeMetric(metric: Metric){
+        let lineText = metric.lines.map(d=>d['src'] + "-" + d['dest'])
+        if (metric.type === MetricType.Angle){
+            return "Angle between " + lineText[0] + " and " + lineText[1]
+        }else{
+            return "Distance of " + lineText[0]
+        }
+    }
+    let data = metrics.map(m=>{
+        return {
+            name: m.name,
+            id: "#" + (m.id?  m.id.toString(): "0"),
+            type: m.type,
+            description: describeMetric(m),
+            visibility: true
+        }
+    })
+    const containerStyles: CSS.Properties = {
+        display: "flex",
+        flexDirection: "row",
+        width: "800",
+    }
+    const tableStyles: CSS.Properties = {
+        width: "400"
+    }
+    const canvasContainerStyles: CSS.Properties = {
+        width: canvasWidth.toString(),
+        height: canvasHeight.toString()
+    }
     return (
-        <div>
-            <canvas
-                id="interaction-canvas"
-                width={canvasWidth}
-                height={canvasHeight}
-            />
+        <div ref={div} style={containerStyles}>
+            <div style={canvasContainerStyles}>
+                <canvas
+                    id="interaction-canvas"
+                    ref={canvasRef}
+                    width={canvasWidth}
+                    height={canvasHeight}
+                />
+            </div>
+
+            <div style={tableStyles}>
+                <MetricTable metricData={data} setData={setMetrics}></MetricTable>
+            </div>
 
         </div>
     );
 }
 
 export default withStreamlitConnection(CanvasComponent);
+// export default CanvasComponent;

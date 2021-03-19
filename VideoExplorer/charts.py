@@ -27,18 +27,22 @@ def process_hist_event(event, values):
     return filtered_values
 
 
-def make_parallel_distribution(datam):
-    source = data.iris()
-    config = (alt.Chart(source).transform_window(
-        index='count()'
-    ).transform_fold(
-        ['petalLength', 'petalWidth', 'sepalLength', 'sepalWidth']
-    ).mark_line().encode(
-        x='key:N',
-        y='value:Q',
-        color='species:N',
-        detail='index:N',
-        opacity=alt.value(0.5)
-    ).properties(width=500))
-    return config
+def make_parallel_distribution(datum):
+    # datum = data.iris()
+    metric_names = list(filter(lambda x: x != "file_id", datum.columns))
+    brushed = alt.selection_interval(encodings=["y"], name="brushed")
+    config = (alt.Chart(datum)
+              .transform_window(
+                    index='count()'
+                )
+              .transform_fold(
+                    metric_names
+                ).mark_line().encode(
+                    x='key:N',
+                    y='value:Q',
+                    color='species:N',
+                    detail='index:N',
+                    opacity=alt.value(0.5)
+                ).properties(width=500)).add_selection(brushed)
+    return config, datum
 
