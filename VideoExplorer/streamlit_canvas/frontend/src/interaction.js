@@ -158,7 +158,8 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
             addAMetric({
                 type: metric['type'],
                 name: "default name",
-                lines: metric['lines']
+                lines: metric['lines'],
+                visibility: true
 
             })
 
@@ -170,6 +171,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
         if (lineIdx >= 0) {
             line = new fabric.Line(points, {
                 stroke: schemeTableau10[lines.length % 10],
+                strokeWidth: 3,
                 hasControls: false,
                 hasBorders: false,
                 lockMovementX: false,
@@ -225,7 +227,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
     };
 
     function onMouseOver(e) {
-        if (e && e.target && "radius" in e.target && e.target.radius <= 20) {
+        if (e && e.target && "radius" in e.target && e.target.radius == 20) {
             e.target.set('fill', styles.hintColor);
             e.target.set("opacity", 0.6)
         }
@@ -233,7 +235,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
     }
 
     function onMouseOut(e) {
-        if (e && e.target && "radius" in e.target && e.target.radius <= 20) {
+        if (e && e.target && "radius" in e.target && e.target.radius == 20) {
             e.target.set('fill', styles.hintColor);
             e.target.set("opacity", 0)
         }

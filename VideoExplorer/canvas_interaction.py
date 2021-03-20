@@ -1,4 +1,5 @@
 from streamlit_canvas import component_func as st_canvas, use_component
+# from streamlit_canvas import component_func as st
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -148,7 +149,6 @@ if __name__ == '__main__':
     }
     f = build_metric_func(sample_result)
     value = f(fake_data)
-    print(value)
 
 
 class MetricManager:
@@ -163,11 +163,13 @@ class MetricManager:
         first = True
         for i, metric in enumerate(self.metrics):
             metric_df = calculate_metrics(metric, df, meta_data)
-            metric_df.columns = ['file_id', str(i)]
+            metric_df.columns = ['file_id', metric['id']]
             if first:
                 result_df = metric_df
                 first = False
             else:
-                result_df = pd.concat([result_df, metric_df[str(i)]], axis=1)
+                result_df = pd.concat([result_df, metric_df[metric['id']]], axis=1)
+        metric_ids = list(map(lambda x: x['id'], self.metrics))
+        result_df.columns = ["file_id", *metric_ids]
         return result_df
 metric_manager = MetricManager()

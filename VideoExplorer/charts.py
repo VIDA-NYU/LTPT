@@ -8,7 +8,7 @@ from streamlit_vega_lite import vega_lite_component, altair_component
 
 hist_data = pd.DataFrame(np.random.normal(42, 10, (200, 1)), columns=["x"])
 
-@st.cache
+# @st.cache
 def make_histogram(data):
     brushed = alt.selection_interval(encodings=["x"], name="brushed")
     config = (

@@ -14,8 +14,6 @@ import TextField from '@material-ui/core/TextField';
 
 const theme = createMuiTheme({
     typography: {
-        // 中文字符和日文字符通常比较大，
-        // 所以选用一个略小的 fontsize 会比较合适。
         fontSize: 12,
     },
 });
@@ -53,13 +51,27 @@ const EditableCell = ({
 //     Cell: EditableCell,
 // }
 
-function MetricTable({metricData, setData}) {
+function MetricTable({metrics, setData}) {
 
-    // const data = React.useMemo(
-    //     () => metricData,
-    //     []
-    // );
-    let data = metricData;
+    function describeMetric(metric){
+        let lineText = metric.lines.map(d=>d['src'] + "-" + d['dest'])
+        if (metric.type === "Angle"){
+            return "Angle between " + lineText[0] + " and " + lineText[1]
+        }else{
+            return "Distance of " + lineText[0]
+        }
+    }
+
+    let data = metrics.map(m=>{
+        return {
+            name: m.name,
+            id:  m.id?  m.id.toString(): "0",
+            type: m.type,
+            description: describeMetric(m),
+            visibility: m.visibility
+        }
+    })
+    // let data = metricData;
     const updateMyData = (rowIndex, columnId, value) => {
         // We also turn on the flag to not reset the page
         // setData(old =>
@@ -73,6 +85,26 @@ function MetricTable({metricData, setData}) {
         //         return row
         //     })
         // )
+    }
+    const updateVisibility = (e, newvalue) =>{
+        // console.log();
+        let rowId = e.target.id.slice(3);
+        let newData =metrics.map(m=>{
+            if(m.id===rowId){
+                return {
+                    ...m,
+                    visibility: newvalue,
+                }
+            }else{
+                return m
+            }
+        });
+        if(newData.filter(d=>d.visibility).length === 0){
+            alert("You need to keep at least one metric!")
+        }else{
+            setData(newData);
+        }
+        // setData()
     }
     const styles = theme => ({
         root: {
@@ -104,7 +136,7 @@ function MetricTable({metricData, setData}) {
                 accessor: "description"
             },
             {
-                Header: "Visible",
+                Header: "View",
                 accessor: 'visibility',
                 type: "checkbox",
             }
@@ -147,7 +179,8 @@ function MetricTable({metricData, setData}) {
                     {/* Apply the table body props */}
                     <TableBody {...getTableBodyProps()}>
                         {// Loop over the table rows
-                            rows.map(row => {
+                            rows.map((row, i) => {
+                                console.log(row)
                                 // Prepare the row for display
                                 prepareRow(row)
                                 return (
@@ -156,11 +189,14 @@ function MetricTable({metricData, setData}) {
                                         {// Loop over the rows cells
                                             row.cells.map(cell => {
                                                 // Apply the cell props
-                                                if (cell.column.Header === "Visible") {
+                                                if (cell.column.Header === "View") {
                                                     return (
                                                         <TableCell padding="checkbox">
+
                                                             <Checkbox
-                                                                // checked={isItemSelected}
+                                                                id={"vc-" + row.original.id}
+                                                                checked={cell.value}
+                                                                onChange={updateVisibility}
                                                                 // inputProps={{ 'aria-labelledby': labelId }}
                                                             />
                                                         </TableCell>

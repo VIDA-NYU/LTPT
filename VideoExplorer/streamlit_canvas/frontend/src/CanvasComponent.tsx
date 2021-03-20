@@ -22,7 +22,8 @@ interface Metric {
     name: string,
     type: MetricType,
     lines: Array<Line>,
-    id?: number
+    visibility: boolean
+    id?: string
 
 }
 
@@ -37,7 +38,7 @@ function CanvasComponent({args} : ComponentProps) {
     let canvasHeight = 400;
     let canvasWidth = 400;
     let updateStatus = (metric: Metric) => {
-        metric.id = metricCount;
+        metric.id = "#" + metrics.length.toString();
         setMetrics([
             ...metrics, metric
         ])
@@ -45,6 +46,13 @@ function CanvasComponent({args} : ComponentProps) {
         Streamlit.setComponentValue({
             // data: lines,
             metrics: [...metrics, metric]
+        })
+    }
+    let updateMetricStatus = (newData: Array<Metric>)=>{
+        setMetrics(newData);
+        Streamlit.setComponentValue({
+            // data: lines,
+            metrics: newData
         })
     }
     let skeletonColor = "#393e46"
@@ -104,6 +112,22 @@ function CanvasComponent({args} : ComponentProps) {
             });
             return circle
         }
+        function makeEye(config: ShapeConfig){
+
+            let circle = new fabric.Circle({
+                radius: 12,
+                fill: undefined,
+                left: config.coords[0],
+                top: config.coords[1],
+                stroke: skeletonColor,
+                selectable: false,
+                originX: "center",
+                originY: "center",
+                startAngle: 10 * Math.PI / 8,
+                endAngle: 14 * Math.PI / 8,
+            })
+            canvas.add(circle);
+        }
         function makeMouth(config: ShapeConfig){
             let circle = new fabric.Circle({
                 radius: 10,
@@ -152,15 +176,20 @@ function CanvasComponent({args} : ComponentProps) {
                 makeMouth(config);
             }else if(config.type === "head"){
                 makeHeadCircle(config);
+            }else if(config.type === "eye"){
+                makeEye(config)
             }
         }
         for (let keypointConfig of keypointConfigs){
             let coords = keypointConfig.coords;
             coords = [coords[0] * canvasWidth, coords[1]*canvasHeight];
             let circle = makeCircle(coords);
-            let coverCircle = makeCoveringCircle(coords)
+
             canvas.add(circle);
-            canvas.add(coverCircle);
+            if(keypointConfig.clickable){
+                let coverCircle = makeCoveringCircle(coords);
+                canvas.add(coverCircle);
+            }
         }
 
         let allPointConfigs: Array<PointConfig> = [...keypointConfigs, ...auxiliaryKeypointConfigs];
@@ -179,7 +208,7 @@ function CanvasComponent({args} : ComponentProps) {
 
     }, []);
     useEffect(()=>{
-        onDrawLine(canvasObj, keypointsOnCanvas, styles, updateStatus)
+        onDrawLine(canvasObj, keypointsOnCanvas.filter(d=>d.clickable), styles, updateStatus)
     }, [canvasObj, metrics]);
     const div = useCallback(node => {
         if (node !== null) {
@@ -191,23 +220,8 @@ function CanvasComponent({args} : ComponentProps) {
     // useEffect(()=>{
     //     canvasRef.clear();
     // }, [args['operation']])
-    function describeMetric(metric: Metric){
-        let lineText = metric.lines.map(d=>d['src'] + "-" + d['dest'])
-        if (metric.type === MetricType.Angle){
-            return "Angle between " + lineText[0] + " and " + lineText[1]
-        }else{
-            return "Distance of " + lineText[0]
-        }
-    }
-    let data = metrics.map(m=>{
-        return {
-            name: m.name,
-            id: "#" + (m.id?  m.id.toString(): "0"),
-            type: m.type,
-            description: describeMetric(m),
-            visibility: true
-        }
-    })
+
+
     const containerStyles: CSS.Properties = {
         display: "flex",
         flexDirection: "row",
@@ -232,7 +246,7 @@ function CanvasComponent({args} : ComponentProps) {
             </div>
 
             <div style={tableStyles}>
-                <MetricTable metricData={data} setData={setMetrics}></MetricTable>
+                <MetricTable metrics={metrics} setData={updateMetricStatus}></MetricTable>
             </div>
 
         </div>

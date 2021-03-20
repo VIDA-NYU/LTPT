@@ -8,6 +8,7 @@ from streamlit_vega_lite import altair_component
 from canvas_interaction import plot_canvas, build_metric_func, get_fake_data, calculate_metrics, MetricManager, metric_manager
 from data import load_meta_by_json as load_meta, meta_data
 from charts import make_histogram, process_hist_event, make_parallel_distribution
+from streamlit_parallel_coordinates import component_func as st_parcoords
 ##############
 # Setting up data and paths
 img_path = Path("../../videos/video_images")
@@ -86,12 +87,30 @@ def main():
     else:
         filtered_df = filtered_df[filtered_df["true_camera_view"] != filtered_df["pred_camera_view"]]
     if canvas_result and "metrics" in canvas_result:
-        metric_manager.metrics = canvas_result['metrics']
+        metric_manager.metrics = list(filter(lambda x:x['visibility'], canvas_result['metrics']))
         if len(metric_manager.metrics) > 1 or True:
             with left_column:
                 metrics_df = metric_manager.build_data(filtered_df, meta_data)
-                parallel_config, source = make_parallel_distribution(metrics_df)
-                parallel_event = altair_component(parallel_config)
+                json_df = []
+                columns = []
+                for col in list(metrics_df.columns):
+                    if col == "file_id":
+                        continue
+                    else:
+                        columns.append({
+                            "key": col,
+                            "type": "Number"
+                        })
+                for row in metrics_df.iterrows():
+                    json_df.append(dict(row[1]))
+                parcoords_result = st_parcoords(data=json_df, columns=columns)
+                if parcoords_result and "filtered" in parcoords_result:
+                    filtered_images = list(map(lambda x: x + ".jpg", parcoords_result['filtered']))
+                    # st.write(filtered_images)
+                    filtered_df = filtered_df[filtered_df['file'].isin(filtered_images)]
+                    use_metric_filter = False
+                # parallel_config, source = make_parallel_distribution(metrics_df)
+                # parallel_event = altair_component(parallel_config)
         # with right_column:
         #     metric_values = pd.DataFrame(valid_files)
         #     metric_values.columns = ['file']
@@ -104,6 +123,7 @@ def main():
         #             filtered = filtered['file'].tolist()
         #             filtered = list(map(lambda x: x + ".jpg", filtered))
         #             use_metric_filter = True
+    # st.write(filtered_df)
     if use_metric_filter:
         filtered_df = filtered_df[filtered_df['file'].isin(filtered)]
     # with right_column:

@@ -1,6 +1,7 @@
 interface PointConfig {
     name: string,
-    coords: Array<number>
+    coords: Array<number>,
+    clickable: boolean
 }
 interface CanvasPoint {
     name: string,
@@ -43,6 +44,7 @@ const keypointConfigs: PointConfig[] = [
     {
         name: "Nose",
         coords: [0.5, 0.115],
+        clickable: false
     },
     // {
     //     name: "Neck",
@@ -50,67 +52,83 @@ const keypointConfigs: PointConfig[] = [
     // },
     {
         name: "RShoulder",
-        coords: [0.6, 0.25]
+        coords: [0.6, 0.25],
+        clickable:true
     },
     {
         name: "LShoulder",
-        coords: [0.4, 0.25]
+        coords: [0.4, 0.25],
+        clickable: true
     },
     {
         name: "RElbow",
-        coords: [0.7, 0.33]
+        coords: [0.7, 0.33],
+        clickable: true
     },
     {
         name: "LElbow",
-        coords: [0.3, 0.33]
+        coords: [0.3, 0.33],
+        clickable: true
     },
     {
         name: "RWrist",
         coords: [0.7, 0.48],
+        clickable: true
     },
     {
         name: "LWrist" ,
-        coords: [0.3, 0.48]
+        coords: [0.3, 0.48],
+        clickable: true
     },
     {
         name: "RHip",
-        coords: [0.54, 0.5]
+        coords: [0.54, 0.5],
+        clickable: true
     },
     {
         name: "LHip",
-        coords: [0.46, 0.5]
+        coords: [0.46, 0.5],
+        clickable: true
     },
     {
         name: "RKnee",
-        coords: [0.6, 0.7]
+        coords: [0.6, 0.7],
+        clickable: true
     },
     {
         name: "LKnee",
-        coords: [0.4, 0.7]
+        coords: [0.4, 0.7],
+        clickable: true
     },
     {
         name: "RAnkle",
-        coords: [0.6, 0.9]
+        coords: [0.6, 0.9],
+        clickable: true
     },
     {
         name: "LAnkle",
-        coords: [0.4, 0.9]
+        coords: [0.4, 0.9],
+        clickable: true
     },
-    {
-        name: "REye",
-        coords: [0.54, 0.07]
-    },
-    {
-        name: "LEye",
-        coords: [0.46, 0.07]
-    },
+    // {
+    //     name: "REye",
+    //     coords: [0.54, 0.07],
+    //     clickable:false
+    // },
+    // {
+    //     name: "LEye",
+    //     coords: [0.46, 0.07],
+    //     clickable:false
+    // },
     {
         name: "REar",
-        coords: [0.6, 0.1]
+        coords: [0.6, 0.1],
+        clickable:false
     },
     {
         name: "LEar",
-        coords: [0.4, 0.1]
+        coords: [0.4, 0.1],
+        clickable:false
     }
 
 ]
@@ -118,15 +136,18 @@ const keypointConfigs: PointConfig[] = [
 let auxiliaryKeypointConfigs: Array<PointConfig> = [
     {
         name: "downSideHead",
-        coords: [0.5, 0.2]
+        coords: [0.5, 0.2],
+        clickable: false
     },
     {
         name: "centerHip",
-        coords: [0.5, 0.5]
+        coords: [0.5, 0.5],
+        clickable: false
     },
     {
         name: "downSideNeck",
-        coords: [0.50,.26]
+        coords: [0.50,.26],
+        clickable: false
     }
 
 ]
@@ -141,6 +162,16 @@ let decorationShapeConfigs: Array<ShapeConfig> = [
         name: "head",
         type: "head",
         coords: [0.5, 0.11]
+    },
+    {
+        name: "LEye",
+        type: "eye",
+        coords: [0.46, 0.10]
+    },
+    {
+        name: "LEye",
+        type: "eye",
+        coords: [0.54, 0.10]
     }
 ]
 

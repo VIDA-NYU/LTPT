@@ -1,3 +1,5 @@
 *.npy
 .idea/
 
+/VideoExplorer/streamlit_canvas.egg-info/
+/VideoExplorer/streamlit_metric_def.egg-info/
