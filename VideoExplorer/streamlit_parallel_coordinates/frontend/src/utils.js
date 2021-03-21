@@ -68,4 +68,35 @@ var renderQueue = (function(func) {
 
     return rq;
 });
-export {renderQueue}
+function describeColumn(column){
+    if(!!column.desc){
+        return column.desc;
+    }else{
+        return column.id;
+    }
+}
+function describeColumns(columns){
+    let nameCount = columns.reduce(( acc, c)=> {
+        if(c.name in acc){
+            acc[c.name] = acc[c.name] + 1
+        }else{
+            acc[c.name] = 1
+        }
+        return acc;
+    },{})
+    let descriptions = columns.map(col=>{
+        if(nameCount[col.name] > 1){
+            return {
+                key: col.key,
+                desc: col.name + "-" + col.key
+            }
+        }else{
+            return {
+                key: col.key,
+                desc: col.name
+            };
+        }
+    })
+    return {descriptions};
+}
+export {renderQueue, describeColumn, describeColumns}

@@ -40,8 +40,7 @@ const EditableCell = ({
                           updateMyData, // This is a custom function that we supplied to our table instance
                       }) => {
     // We need to keep and update the state of the cell normally
-    const [value, setValue] = React.useState(initialValue)
-
+    const [value, setValue] = React.useState(initialValue);
     const onChange = e => {
         setValue(e.target.value)
     }
@@ -88,21 +87,21 @@ function MetricTable({metrics, setData}) {
     })
     // let data = metricData;
     const updateMyData = (rowIndex, columnId, value) => {
+
         // We also turn on the flag to not reset the page
-        // setData(old =>
-        //     old.map((row, index) => {
-        //         if (index === rowIndex) {
-        //             return {
-        //                 ...old[rowIndex],
-        //                 [columnId]: value,
-        //             }
-        //         }
-        //         return row
-        //     })
-        // )
+        setData(
+            metrics.map((row, index) => {
+                if (index === rowIndex) {
+                    return {
+                        ...metrics[rowIndex],
+                        [columnId]: value,
+                    }
+                }
+                return row
+            })
+        )
     }
     const updateVisibility = (e, newvalue) =>{
-        // console.log();
         let rowId = e.target.id.slice(3);
         let newData =metrics.map(m=>{
             if(m.id===rowId){
@@ -140,7 +139,7 @@ function MetricTable({metrics, setData}) {
             {
                 Header: 'Name',
                 accessor: 'name', // accessor is the "key" in the data,
-                Cell: EditableCell
+                Cell: EditableCell,
             },
             {
                 Header: 'Id',
@@ -195,7 +194,6 @@ function MetricTable({metrics, setData}) {
                     <TableBody {...getTableBodyProps()}>
                         {// Loop over the table rows
                             rows.map((row, i) => {
-                                console.log(row)
                                 // Prepare the row for display
                                 prepareRow(row)
                                 return (

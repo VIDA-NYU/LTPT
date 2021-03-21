@@ -105,9 +105,11 @@ def main():
                         continue
                     else:
                         metric_type = metric_manager.get_metric_type(col)
+                        metric = metric_manager.get_metrc(col)
                         columns.append({
                             "key": col,
-                            "type": metric_type if metric_type == "Angle" else "Number"
+                            "type": metric_type if metric_type == "Angle" else "Number",
+                            "name": metric['name']
                         })
                 for row in metrics_df.iterrows():
                     json_df.append(dict(row[1]))

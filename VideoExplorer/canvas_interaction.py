@@ -176,4 +176,8 @@ class MetricManager:
     def get_metric_type(self, metric_id):
         metric = list(filter(lambda x: x['id']==metric_id, self.metrics))[0]
         return metric['type']
+
+    def get_metrc(self, metric_id):
+        metric = list(filter(lambda x: x['id'] == metric_id, self.metrics))[0]
+        return metric
 metric_manager = MetricManager()

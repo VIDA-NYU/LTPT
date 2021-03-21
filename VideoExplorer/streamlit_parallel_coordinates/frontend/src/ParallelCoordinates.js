@@ -8,7 +8,7 @@ import {renderQueue} from "./utils";
 function hashColumns(cols){
     return cols.map(c=>c.key).join();
 }
-export default function ParallelCoordinates({data, dimensions, setColumnFocus, onSetImageFilter, highlightImage, height, width, setColumnFilters}) {
+export default function ParallelCoordinates({data, dimensions, setColumnFocus, onSetImageFilter, highlightImage, height, width, setColumnFilters, columnDescriptions}) {
     const [canvas, setCanvas] = useState(null);
     const [ctx, setCtx] = useState(null);
     // let height = 400;
@@ -16,7 +16,7 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     let margin = {
         left: 90,
         right: 20,
-        top: 20,
+        top: 60,
         bottom: 20
     }
     let xScale = d3.scaleBand()
@@ -186,8 +186,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
         }).append("text")
             .attr("class", "title")
             .attr("text-anchor", "start")
-            .text(function (d) {
-                return "description" in d ? d.description : d.key;
+            .text(function (d, i) {
+                return columnDescriptions[i].desc;
             });
         axes.on('mouseover', function (e, d) {
                 console.log(d.key);

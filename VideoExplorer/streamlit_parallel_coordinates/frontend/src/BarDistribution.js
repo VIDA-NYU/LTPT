@@ -3,11 +3,9 @@ import * as d3 from "d3"
 import {scaleBand, scaleLinear} from "d3-scale"
 import {axisLeft} from "d3";
 import {VegaLite, Vega} from "react-vega";
+import {describeColumn} from "./utils";
 
-
-export default function BarDistribution({data, column, height, imageFilter, columnFilters}){
-    console.log(imageFilter)
-    console.log(data)
+export default function BarDistribution({data, column, height, imageFilter, columnFilters, columnDescription}){
     let table = {
         table: data
     }
@@ -26,9 +24,6 @@ export default function BarDistribution({data, column, height, imageFilter, colu
     }
     // mark-rect role-mark
     useEffect(()=>{
-        console.log("draw");
-        console.log(extent);
-        console.log(columnFilters)
         let svg = d3.select(".chart-wrapper").select("svg");
         let axisSelection = svg.selectAll(".role-axis").nodes()
         let chartContent = axisSelection[0];
@@ -67,13 +62,13 @@ export default function BarDistribution({data, column, height, imageFilter, colu
 
 
 
-        // console.log(chartContent.node().getBoundingClientRect())
     },[columnFilters, columnName])
+    let columnDesc = describeColumn(column);
     let spec = {
         height: height,
         width: height,
         "data": {"name": "table"},
-        title: "Distribution of " + columnName,
+        title: "Distribution of " + columnDescription.desc,
         "layer": [
         {
             "params": [{
