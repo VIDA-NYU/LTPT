@@ -8,7 +8,7 @@ import {renderQueue} from "./utils";
 function hashColumns(cols){
     return cols.map(c=>c.key).join();
 }
-export default function ParallelCoordinates({data, dimensions, setColumnFocus, onSetImageFilter, highlightImage, height, width}) {
+export default function ParallelCoordinates({data, dimensions, setColumnFocus, onSetImageFilter, highlightImage, height, width, setColumnFilters}) {
     const [canvas, setCanvas] = useState(null);
     const [ctx, setCtx] = useState(null);
     // let height = 400;
@@ -32,6 +32,19 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
                 return +d;
             },
             extent: d3.extent,
+            domain: [0, 100],
+            within: function (d, extent, dim) {
+                return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1];
+            },
+            defaultScale: d3.scaleLinear().range([innerHeight, 0])
+        },
+        "Angle": {
+            key: "Angle",
+            coerce: function (d) {
+                return +d;
+            },
+            extent: (data)=>[0, 180],
+            domain: [0, 180],
             within: function (d, extent, dim) {
                 return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1];
             },
@@ -66,7 +79,7 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     //     .style("width", width + margin.left + margin.right + "px")
     //     .style("height", height + margin.top + margin.bottom + "px");
     dimensions = dimensions.map(d => {
-        let yScale = scaleLinear().domain([0, 180]).range([0, height])
+        let yScale = scaleLinear().domain(types[d.type].domain).range([0, height])
         return {
             ...d,
             scale: yScale,
@@ -232,7 +245,7 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
                 }
             });
 
-            onSetImageFilter(selected.map(d=>d.file_id))
+            onSetImageFilter(selected.map(d=>d.file_id),actives)
             ctx.strokeStyle = "#df7861";
             ctx.clearRect(0, 0, width, height);
             ctx.globalAlpha = d3.min([0.85 / Math.pow(selected.length, 0.3), 1]);

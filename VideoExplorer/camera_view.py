@@ -13,6 +13,9 @@ from streamlit_parallel_coordinates import component_func as st_parcoords
 # Setting up data and paths
 img_path = Path("../../videos/video_images")
 video_df = pd.read_csv("camera_view.csv")
+
+video_df = video_df.replace("Batter, 3B side", "Batter")
+video_df = video_df.replace("Pitcher, 3B side", "Pitcher")
 camera_views = video_df["true_camera_view"].unique()
 camera_views = camera_views[1:3]
 st.set_page_config(layout="wide")
@@ -97,9 +100,10 @@ def main():
                     if col == "file_id":
                         continue
                     else:
+                        metric_type = metric_manager.get_metric_type(col)
                         columns.append({
                             "key": col,
-                            "type": "Number"
+                            "type": metric_type if metric_type == "Angle" else "Number"
                         })
                 for row in metrics_df.iterrows():
                     json_df.append(dict(row[1]))

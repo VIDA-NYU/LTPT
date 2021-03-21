@@ -3,19 +3,34 @@ import {useTable} from 'react-table';
 import './App.css';
 import CssBaseline from '@material-ui/core/CssBaseline'
 import MaUTable from '@material-ui/core/Table'
+import TableContainer from '@material-ui/core/TableContainer';
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Checkbox from '@material-ui/core/Checkbox';
 import {ThemeProvider} from '@material-ui/core/styles';
-import { createMuiTheme } from '@material-ui/core/styles';
+import { createMuiTheme, makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
+
+const useStyles = makeStyles({
+    table: {
+        minWidth: 530,
+        maxHeight: 400,
+
+    },
+});
 
 const theme = createMuiTheme({
     typography: {
         fontSize: 12,
     },
+    paper: {
+        width: '100%',
+
+        // overflowX: 'scroll',
+    },
+
 });
 
 const EditableCell = ({
@@ -52,7 +67,7 @@ const EditableCell = ({
 // }
 
 function MetricTable({metrics, setData}) {
-
+    const classes = useStyles();
     function describeMetric(metric){
         let lineText = metric.lines.map(d=>d['src'] + "-" + d['dest'])
         if (metric.type === "Angle"){
@@ -158,8 +173,8 @@ function MetricTable({metrics, setData}) {
             <ThemeProvider theme={theme}>
 
                 <CssBaseline/>
-
-                <MaUTable {...getTableProps()}>
+                <TableContainer className={classes.table}>
+                <MaUTable  {...getTableProps()} stickyHeader  >
                     <TableHead>
                         {// Loop over the header rows
                             headerGroups.map(headerGroup => (
@@ -217,6 +232,7 @@ function MetricTable({metrics, setData}) {
                             })}
                     </TableBody>
                 </MaUTable>
+                </TableContainer>
             </ThemeProvider>
         </div>
 

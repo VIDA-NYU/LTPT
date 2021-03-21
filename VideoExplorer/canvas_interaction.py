@@ -96,7 +96,7 @@ def build_metric_func(metric):
             line = metric['lines'][0]
             # line = lines[int(line_idx)]
             vector = extract_vector(line, data)
-            return calculate_vector_length(vector)
+            return calculate_vector_length(vector) * 100
     return _f
 
 def calculate_metrics(metric_def, video_df, meta_data):
@@ -156,6 +156,7 @@ class MetricManager:
         self.metrics = []
 
     def add_metric(self, metric):
+
         self.metrics.append(metric)
 
     def build_data(self, df, meta_data):
@@ -172,4 +173,8 @@ class MetricManager:
         metric_ids = list(map(lambda x: x['id'], self.metrics))
         result_df.columns = ["file_id", *metric_ids]
         return result_df
+
+    def get_metric_type(self, metric_id):
+        metric = list(filter(lambda x: x['id']==metric_id, self.metrics))[0]
+        return metric['type']
 metric_manager = MetricManager()

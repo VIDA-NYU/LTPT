@@ -39,8 +39,100 @@ const pointsSource = {
     'REar': 15,
     'LEar': 16,
 }
-
 const keypointConfigs: PointConfig[] = [
+    {
+        name: "Nose",
+        coords: [0.5, 0.115],
+        clickable: false
+    },
+    // {
+    //     name: "Neck",
+    //     coords: [0.5, 0.24]
+    // },
+    {
+        name: "RShoulder",
+        coords: [0.58, 0.17],
+        clickable:true
+    },
+    {
+        name: "LShoulder",
+        coords: [0.42, 0.17],
+        clickable: true
+    },
+    {
+        name: "RElbow",
+        coords: [0.607, 0.32],
+        clickable: true
+    },
+    {
+        name: "LElbow",
+        coords: [0.393, 0.32],
+        clickable: true
+    },
+    {
+        name: "RWrist",
+        coords: [0.64, 0.435],
+        clickable: true
+    },
+    {
+        name: "LWrist" ,
+        coords: [0.36, 0.435],
+        clickable: true
+    },
+    {
+        name: "RHip",
+        coords: [0.54, 0.43],
+        clickable: true
+    },
+    {
+        name: "LHip",
+        coords: [0.46, 0.43],
+        clickable: true
+    },
+    {
+        name: "RKnee",
+        coords: [0.545, 0.64],
+        clickable: true
+    },
+    {
+        name: "LKnee",
+        coords: [0.455, 0.64],
+        clickable: true
+    },
+    {
+        name: "RAnkle",
+        coords: [0.535, 0.82],
+        clickable: true
+    },
+    {
+        name: "LAnkle",
+        coords: [0.465, 0.82],
+        clickable: true
+    },
+    // {
+    //     name: "REye",
+    //     coords: [0.54, 0.07],
+    //     clickable:false
+    // },
+    // {
+    //     name: "LEye",
+    //     coords: [0.46, 0.07],
+    //     clickable:false
+    // },
+    {
+        name: "REar",
+        coords: [0.6, 0.1],
+        clickable:false
+    },
+    {
+        name: "LEar",
+        coords: [0.4, 0.1],
+        clickable:false
+    }
+
+]
+
+const keypointPlainConfigs: PointConfig[] = [
     {
         name: "Nose",
         coords: [0.5, 0.115],
