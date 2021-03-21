@@ -70,10 +70,11 @@ def main():
         true_action = st.selectbox("Select the player action", actions)
 
 
-    correct_pred_option = st.radio(
-        "Show Predictions",
-        ("Correct", "Incorrect"))
+    # correct_pred_option = st.radio(
+    #     "Show Predictions",
+    #     ("Correct", "Incorrect"))
     # clear_button = st.button("clear")
+    correct_pred_option = "Correct"
     columns = st.beta_columns((4, 1, 1, 1))
     image_columns = columns[1:]
     left_column = columns[0]
