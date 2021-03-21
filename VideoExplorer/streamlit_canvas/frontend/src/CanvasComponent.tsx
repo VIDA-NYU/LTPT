@@ -1,5 +1,5 @@
 import {withStreamlitConnection, StreamlitComponentBase, Streamlit, ComponentProps} from "streamlit-component-lib"
-import React, {useEffect, useRef, useState, useCallback} from 'react';
+import React, {useEffect, useRef, useState, useCallback, CSSProperties} from 'react';
 import {fabric} from "fabric"
 import CSS from 'csstype';
 import bodyImage from "./body.png"
@@ -29,11 +29,9 @@ interface Metric {
 
 function CanvasComponent({args} : ComponentProps) {
     // const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [canvasObj, setCanvas] = useState(new fabric.Canvas("interaction-canvas", {
-        enableRetinaScaling: false,
-    }));
-    const [backgroundCanvas, setBackgroundCanvas] = useState<fabric.Canvas>();
-    const [draw, setDraw] = useState(0);
+    const [canvasObj, setCanvas] = useState<fabric.Canvas>();
+    // const [backgroundCanvas, setBackgroundCanvas] = useState<fabric.Canvas>();
+    // const [draw, setDraw] = useState(0);
     const [metrics, setMetrics] = useState<Array<Metric>>([]);
     const [metricCount, setMetricCount] = useState<number>(0)
     let canvasHeight = 400;
@@ -72,31 +70,35 @@ function CanvasComponent({args} : ComponentProps) {
         }
     });
     useEffect(()=>{
-        const c = new fabric.Canvas("background-canvas", {
-            enableRetinaScaling: false
-        });
-        let image = new Image()
-        // image.src = "/logo192.png"
-        // image.src = "/logo512.png";
-        image.src = "/body.png";
-        let scale = 340 / 512;
-        let tmp = new fabric.Image(image, {});
-        tmp.set({
-            scaleX: scale,
-            scaleY: scale,
-            left: canvasWidth / 2 - 170
-        })
-        c.add(tmp);
-
-
-        const imageData = c
-            .getContext()
-            .createImageData(canvasWidth, canvasHeight)
-        // imageData.data.set(bodyImage)
-        // backgroundCanvas.getContext().putImageData(imageData, 0, 0)
-
-        setBackgroundCanvas(c);
+        // const c = new fabric.Canvas("background-canvas", {
+        //     enableRetinaScaling: false
+        // });
+        // let image = new Image()
+        // // image.src = "/logo192.png"
+        // // image.src = "/logo512.png";
+        // image.src = "/body.png";
+        // let scale = 340 / 512;
+        // let tmp = new fabric.Image(image, {});
+        // tmp.set({
+        //     scaleX: scale,
+        //     scaleY: scale,
+        //     left: canvasWidth / 2 - 170
+        // })
+        // c.add(tmp);
+        //
+        //
+        // const imageData = c
+        //     .getContext()
+        //     .createImageData(canvasWidth, canvasHeight)
+        // // imageData.data.set(bodyImage)
+        // // backgroundCanvas.getContext().putImageData(imageData, 0, 0)
+        //
+        // setBackgroundCanvas(c);
     }, [])
+    useEffect(()=>{
+        Streamlit.setFrameHeight()
+
+    })
     useEffect(() => {
 
         const canvas = new fabric.Canvas("interaction-canvas", {
@@ -104,7 +106,6 @@ function CanvasComponent({args} : ComponentProps) {
         })
         // let canvas = canvasObj
         setCanvas(canvas);
-        Streamlit.setFrameHeight()
         let circleFill = "#dbe2ef"
         let circleStroke = "#666"
         let lineColor = "red"
@@ -197,15 +198,7 @@ function CanvasComponent({args} : ComponentProps) {
             }
         })
 
-        // for (let config of decorationShapeOnCanvas){
-        //     if (config.type === "mouth"){
-        //         makeMouth(config);
-        //     }else if(config.type === "head"){
-        //         makeHeadCircle(config);
-        //     }else if(config.type === "eye"){
-        //         makeEye(config)
-        //     }
-        // }
+
         for (let keypointConfig of keypointConfigs){
             let coords = keypointConfig.coords;
             coords = [coords[0] * canvasWidth, coords[1]*canvasHeight];
@@ -216,8 +209,10 @@ function CanvasComponent({args} : ComponentProps) {
                 canvas.add(circle);
                 let coverCircle = makeCoveringCircle(coords);
                 canvas.add(coverCircle);
+
             }
         }
+        // canvas.clear()
 
         let allPointConfigs: Array<PointConfig> = [...keypointConfigs, ...auxiliaryKeypointConfigs];
         // for (let lineConfig of auxiliaryLineConfigs){
@@ -235,6 +230,9 @@ function CanvasComponent({args} : ComponentProps) {
 
     }, []);
     useEffect(()=>{
+        if (!canvasObj){
+            return;
+        }
         onDrawLine(canvasObj, keypointsOnCanvas.filter(d=>d.clickable), styles, updateStatus)
     }, [canvasObj, metrics]);
     const div = useCallback(node => {
@@ -267,10 +265,16 @@ function CanvasComponent({args} : ComponentProps) {
     let canvasMargin = {
         top: 20
     }
+    let imgStyles: CSSProperties = {
+        position: "absolute",
+        top: 0,
+        left: canvasWidth / 2 - 170,
+        transform: "translate(" + (canvasWidth/2 ) + ", 0)",
+        zIndex: 1,
+    }
     return (
         <div ref={div} style={containerStyles}>
             <div style={canvasContainerStyles}>
-                {/*<img src={bodyImage}/>*/}
 
                 <div
                     style={{
@@ -283,24 +287,27 @@ function CanvasComponent({args} : ComponentProps) {
                     }}
                 >
 
-                <canvas
-                    id={"background-canvas"}
-                    width={canvasWidth}
-                    height={canvasHeight}
-                >
+                    <img src={"/body.png"} width={340} style={imgStyles} />
+                {/*<canvas*/}
+                {/*    // id={"interaction-canvas"}*/}
+                {/*    id={"background-canvas"}*/}
+                {/*    width={canvasWidth}*/}
+                {/*    height={canvasHeight}*/}
+                {/*>*/}
 
-                </canvas>
+                {/*</canvas>*/}
                 </div>
                 <div
                     style={{
                         position: "absolute",
                         top: canvasMargin.top,
                         left: 0,
-                        zIndex: 10,
+                        zIndex: 12,
                     }}
                 >
                     <canvas
                     id={"interaction-canvas"}
+                        // id={"background-canvas"}
                     // ref={canvasRef}
                     width={canvasWidth}
                     height={canvasHeight}
