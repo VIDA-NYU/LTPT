@@ -1,7 +1,8 @@
 import {fabric} from "fabric";
-import {schemeTableau10} from "d3-scale-chromatic"
+import {schemeTableau10, schemeSet3} from "d3-scale-chromatic"
 import {Streamlit} from 'streamlit-component-lib'
 import {keypointConfigs} from "./constants";
+const colorScheme = schemeSet3
 function isAroundPoint(pointer, coords) {
 
     let dist = (pointer.x - coords[0]) * (pointer.x - coords[0]) + (pointer.y - coords[1]) * (pointer.y - coords[1]);
@@ -234,7 +235,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
         let {lineIdx, nearPoint} = aroundWhichLine(pointer);
         if(lineIdx === metricStartLine){
             line.set({
-                stroke: schemeTableau10[lines.length - 1],
+                stroke: colorScheme[lines.length%10],
                 x1: fixedPoints.filter(d=>d.name ===lines[metricStartLine].src)[0].coords[0],
                 y1: fixedPoints.filter(d=>d.name ===lines[metricStartLine].src)[0].coords[1],
                 x2: fixedPoints.filter(d=>d.name ===lines[metricStartLine].dest)[0].coords[0],
@@ -304,7 +305,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
                 fill: null,
                 left: nearPoint.x,
                 top: nearPoint.y,
-                stroke: schemeTableau10[lines.length % 10],
+                stroke: colorScheme[lines.length % 10],
                 selectable: false,
                 originX: "center",
                 originY: "center",
