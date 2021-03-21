@@ -156,7 +156,6 @@ class MetricManager:
         self.metrics = []
 
     def add_metric(self, metric):
-
         self.metrics.append(metric)
 
     def build_data(self, df, meta_data):

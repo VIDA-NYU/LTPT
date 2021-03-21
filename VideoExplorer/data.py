@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import json
+import pandas as pd
 # import streamlit as st
 
 kps_source = {
@@ -180,10 +181,23 @@ def extract_pose_data(pose_doc):
             kp_data.append(frames)
         pose_data.append(kp_data)
     return pose_data
+
+def process_df(oldcsv, meta_data):
+    values = []
+    for row in oldcsv.iterrows():
+        file_id = row[1]['file'][:-4]
+        if file_id in meta_data:
+            value = meta_data[file_id]['action'][0].upper() + meta_data[file_id]['action'][1:]
+        else:
+            value = "Not Detected"
+        values.append(value)
+    oldcsv['action'] = values
+    return oldcsv
 if __name__ == '__main__':
-    # save_remote_db_to_local()
-    data = load_meta()
-    with open("meta-remote.json", "w") as fp:
-        json.dump(data, fp)
-    load_meta()
-meta_data = load_meta_by_json()
+    # process_csv()
+    save_remote_db_to_local()
+    # data = load_meta()
+    # with open("meta-remote.json", "w") as fp:
+    #     json.dump(data, fp)
+    # load_meta()
+# meta_data = load_meta_by_json()

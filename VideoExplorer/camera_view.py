@@ -6,20 +6,18 @@ from matplotlib import pyplot
 from streamlit_canvas import component_func as st_canvas
 from streamlit_vega_lite import altair_component
 from canvas_interaction import plot_canvas, build_metric_func, get_fake_data, calculate_metrics, MetricManager, metric_manager
-from data import load_meta_by_json as load_meta, meta_data
+from data import load_meta_by_json as load_meta
 from charts import make_histogram, process_hist_event, make_parallel_distribution
 from streamlit_parallel_coordinates import component_func as st_parcoords
+from prepare import meta_data, video_df
 ##############
 # Setting up data and paths
 img_path = Path("../../videos/video_images")
-video_df = pd.read_csv("camera_view.csv")
-
-video_df = video_df.replace("Batter, 3B side", "Batter")
-video_df = video_df.replace("Pitcher, 3B side", "Pitcher")
 camera_views = video_df["true_camera_view"].unique()
+actions = list(filter(lambda x: x != "Not Detected", video_df['action'].unique()))
 camera_views = camera_views[1:3]
 st.set_page_config(layout="wide")
-
+# st.write(meta_data)
 def divide_chunks(l, n):
     # divide list l in chunks of size n
     for i in range(0, len(l), n):  
@@ -65,9 +63,13 @@ def main():
     st.title("Video Tool - Camera Position Explorer")
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
 
+    selection_columns = st.beta_columns(2)
+    with selection_columns[0]:
+        true_camera_view = st.selectbox("Select camera position", camera_views)
+    with selection_columns[1]:
+        true_action = st.selectbox("Select the player action", actions)
 
 
-    true_camera_view = st.selectbox("Select camera position", camera_views)
     correct_pred_option = st.radio(
         "Show Predictions",
         ("Correct", "Incorrect"))
@@ -85,6 +87,7 @@ def main():
 
 
     filtered_df = video_df[video_df["true_camera_view"] == true_camera_view]
+    filtered_df = filtered_df[filtered_df['action'] == true_action]
     if correct_pred_option == "Correct":
         filtered_df = filtered_df[filtered_df["true_camera_view"] == filtered_df["pred_camera_view"]]
     else:
