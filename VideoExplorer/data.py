@@ -82,12 +82,12 @@ def save_remote_db_to_local():
         print("saved:", collection_name)
 # @st.cache
 def load_meta_by_json():
-    with open("./meta.json", "r") as fp:
+    with open("meta.json", "r") as fp:
         meta_data = json.load(fp)
         return meta_data
 def load_meta():
-    client = MongoClient("mongodb+srv://guande:guandemongo@ltpt.qsvio.mongodb.net")
-    # client = MongoClient()
+    # client = MongoClient("mongodb+srv://guande:guandemongo@ltpt.qsvio.mongodb.net")
+    client = MongoClient()
 
     print("db connected")
     db = client.ltpt
@@ -102,7 +102,12 @@ def load_meta():
         file_id = doc['filepath'].split("/")[-1][:-4]
         file_id = file_id[:-1] + "_" +file_id[-1]
         obj = {
-            "file_id": file_id
+            "file_id": file_id,
+            "view": doc['view'],
+            "play": doc['play'],
+            "game": doc['game'],
+            "col": doc['col']
+
         }
         data[file_id] = obj
         if "poses" in doc:
@@ -172,7 +177,6 @@ def extract_pose_data(pose_doc):
     pose_data = []
     for kp_key in kps_source:
         kp_key = convert_keypoint_name(kp_key)
-        print(kp_key)
         coordinate_keys = ["x", "y"]
         kp_data = []
         for coordinate_key in coordinate_keys:
@@ -184,20 +188,41 @@ def extract_pose_data(pose_doc):
 
 def process_df(oldcsv, meta_data):
     values = []
+    valid_files = list(meta_data.keys())
+    valid_files = list(map(lambda x: x+".jpg", valid_files))
+    oldcsv = oldcsv[oldcsv['file'].isin(valid_files)]
+
+    views = []
+    plays = []
+    games = []
+    cols = []
     for row in oldcsv.iterrows():
         file_id = row[1]['file'][:-4]
         if file_id in meta_data:
+            doc = meta_data[file_id]
             value = meta_data[file_id]['action'][0].upper() + meta_data[file_id]['action'][1:]
+            view = meta_data[file_id]['view']
+            game = meta_data[file_id]['game']
+            play = doc['play']
+            col = doc['col']
+            values.append(value)
+            views.append(view)
+            games.append(game)
+            plays.append(play)
+            cols.append(col)
         else:
             value = "Not Detected"
-        values.append(value)
     oldcsv['action'] = values
+    oldcsv['view'] = views
+    oldcsv['game'] = games
+    oldcsv['col'] = cols
+    oldcsv['play'] = plays
     return oldcsv
 if __name__ == '__main__':
     # process_csv()
-    save_remote_db_to_local()
-    # data = load_meta()
-    # with open("meta-remote.json", "w") as fp:
-    #     json.dump(data, fp)
-    # load_meta()
+    # save_remote_db_to_local()
+    data = load_meta()
+    with open("meta.json", "w") as fp:
+        json.dump(data, fp)
+    load_meta()
 # meta_data = load_meta_by_json()

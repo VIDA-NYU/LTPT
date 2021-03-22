@@ -9,13 +9,14 @@ from canvas_interaction import plot_canvas, build_metric_func, get_fake_data, ca
 from data import load_meta_by_json as load_meta
 from charts import make_histogram, process_hist_event, make_parallel_distribution
 from streamlit_parallel_coordinates import component_func as st_parcoords
+from streamlit_image_grid import component_func as st_imagegrid
 from prepare import meta_data, video_df
 ##############
 # Setting up data and paths
 img_path = Path("../../videos/video_images")
 camera_views = video_df["true_camera_view"].unique()
 actions = list(filter(lambda x: x != "Not Detected", video_df['action'].unique()))
-camera_views = camera_views[1:3]
+# camera_views = camera_views[1:3]
 st.set_page_config(layout="wide")
 # st.write(meta_data)
 def divide_chunks(l, n):
@@ -75,9 +76,10 @@ def main():
     #     ("Correct", "Incorrect"))
     # clear_button = st.button("clear")
     correct_pred_option = "Correct"
-    columns = st.beta_columns((4, 1, 1, 1))
+    columns = st.beta_columns((4, 3))
     image_columns = columns[1:]
     left_column = columns[0]
+    right_column = columns[1]
     with left_column:
         canvas_result = plot_canvas("create")
 
@@ -136,9 +138,23 @@ def main():
     # st.write(filtered_df)
     if use_metric_filter:
         filtered_df = filtered_df[filtered_df['file'].isin(filtered)]
-    # with right_column:
+
+    image_json = []
+    for row in filtered_df.iterrows():
+        obj = {
+            "file_id": row[1]['play'] + "_" + row[1]['view'],
+            "col": row[1]['col'],
+            "game": row[1]['game'],
+            "play": row[1]['play'],
+            "view": row[1]['view']
+        }
+        image_json.append(obj)
+
+    with right_column:
+        st_imagegrid(images=image_json)
     filtered_df = filtered_df.iloc[:3*10]
-    plot_image_grid(filtered_df, 3, image_columns)
+
+    # plot_image_grid(filtered_df, 3, image_columns)
 
 
 ##############
