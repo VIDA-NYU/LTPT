@@ -1,4 +1,9 @@
 config.json
 *.npy
 .idea/
+all_images/
+all_masks/
+selected_images/
+selected_masks/
+
 
