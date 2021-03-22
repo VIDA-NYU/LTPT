@@ -29,7 +29,7 @@ def load_image(filename):
 def apply_mask(img, mask):
     if mask is not None:
         r, c = np.nonzero(mask)
-        img[r, c, :] = [255, 255, 0]
+        img[r, c, :] = [0, 255, 255]
     return img
 
 
@@ -545,14 +545,6 @@ def select_all(mask_mandatory=True):
                     (img_name, selected_images_path + str(j) + "/" + base_name[:-4] + ".png",
                      mask_name, selected_masks_path + str(j) + "/" + base_name[:-4] + ".png",
                      has_mask=has_mask))
-
-        # img = load_image(img_name)
-        # mask = load_image(mask_name) if has_mask else None
-        #
-        # pyplot.imsave(selected_images_path + str(j) + "/" + base_name[:-4] + ".png", img)
-        # if mask is not None:
-        #     pyplot.imsave(selected_masks_path + str(j) + "/" + base_name[:-4] + ".png", mask)
-
         j_tot += 1
 
     print(len(jobs), "jobs")
