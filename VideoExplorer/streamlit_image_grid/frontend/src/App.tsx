@@ -3,7 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import ImageGrid from "./ImageGrid";
 import VideoPlayer from "./VideoPlayer";
-import {ImageConfig, getVideoUrl} from "./utils";
+import {ImageConfig, getVideoUrl, ImageData} from "./utils";
 import {withStreamlitConnection, StreamlitComponentBase, Streamlit, ComponentProps} from "streamlit-component-lib"
 function App({args} : ComponentProps) {
     const [focusImage, setFocusImage] = useState<ImageConfig>()
@@ -14,7 +14,29 @@ function App({args} : ComponentProps) {
     useEffect(()=>{
         Streamlit.setFrameHeight()
     }, [])
-    console.log(args.images)
+    let dataMaps = args.data as Array<Map<string, any>>;
+    let imageDataArray: Array<ImageData> = []
+    for (let dataMap of args.data){
+
+        let metrics = new Map<string, number>();
+        let file = "";
+        for (let key in dataMap){
+            if(key === "file_id"){
+                file= dataMap[key];
+            }else{
+                metrics.set(key, dataMap[key]);
+            }
+        }
+        let imageData: ImageData = {
+            file: file,
+            data: metrics
+        }
+        imageDataArray.push(imageData);
+    }
+    let imageDataMap = new Map<string, ImageData>();
+    for (let imageData of imageDataArray){
+        imageDataMap.set(imageData.file, imageData);
+    }
     let imageConfigs = args.images;
     // for (let i = 0; i < 10; i++) {
     //     imageConfigs.push({
@@ -28,8 +50,17 @@ function App({args} : ComponentProps) {
     let url = getVideoUrl(focusImage);
     return (
         <div className="App">
-            <VideoPlayer url={url}/>
-            <ImageGrid imageConfigs={imageConfigs} onClickPlay={playVideo}/>
+
+            {()=>{
+                if(!!focusImage){
+                    return <VideoPlayer url={url}/>
+                }else{
+
+                }
+            }}
+            <ImageGrid imageConfigs={imageConfigs} onClickPlay={playVideo} videoShowing={!focusImage? false: true}
+                columns={args.columns} imageDataMap={imageDataMap}
+            />
         </div>
     );
 }

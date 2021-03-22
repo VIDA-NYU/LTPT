@@ -95,13 +95,15 @@ def main():
         filtered_df = filtered_df[filtered_df["true_camera_view"] == filtered_df["pred_camera_view"]]
     else:
         filtered_df = filtered_df[filtered_df["true_camera_view"] != filtered_df["pred_camera_view"]]
+    json_df = []
+    columns = []
     if canvas_result and "metrics" in canvas_result:
         metric_manager.metrics = list(filter(lambda x:x['visibility'], canvas_result['metrics']))
         if len(metric_manager.metrics) > 1 or True:
             with left_column:
                 metrics_df = metric_manager.build_data(filtered_df, meta_data)
-                json_df = []
-                columns = []
+
+
                 for col in list(metrics_df.columns):
                     if col == "file_id":
                         continue
@@ -151,7 +153,7 @@ def main():
         image_json.append(obj)
 
     with right_column:
-        st_imagegrid(images=image_json)
+        st_imagegrid(images=image_json, data=json_df, columns=columns)
     filtered_df = filtered_df.iloc[:3*10]
 
     # plot_image_grid(filtered_df, 3, image_columns)
