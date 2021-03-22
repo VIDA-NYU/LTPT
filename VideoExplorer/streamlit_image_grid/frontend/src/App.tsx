@@ -47,17 +47,24 @@ function App({args} : ComponentProps) {
     //         "col": "AFL Video"
     //     })
     // }
+    let onVideoClose = ()=>{
+        setFocusImage(undefined);
+    }
     let url = getVideoUrl(focusImage);
+    let renderVideo = ()=>{
+        if(focusImage!==undefined){
+            return ( <VideoPlayer onClose={onVideoClose} url={url}/>)
+        }else{
+            // return (<VideoPlayer url={url}/>)
+        }
+    }
+
     return (
         <div className="App">
 
-            {()=>{
-                if(!!focusImage){
-                    return <VideoPlayer url={url}/>
-                }else{
-
-                }
-            }}
+            {
+                renderVideo()
+            }
             <ImageGrid imageConfigs={imageConfigs} onClickPlay={playVideo} videoShowing={!focusImage? false: true}
                 columns={args.columns} imageDataMap={imageDataMap}
             />

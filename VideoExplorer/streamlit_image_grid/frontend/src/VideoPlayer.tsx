@@ -1,12 +1,32 @@
-import {CSSProperties, useRef} from "react";
+import React, {CSSProperties, useRef} from "react";
 import ReactPlayer from 'react-player/file'
-
+// import  from '@material-ui/icons/Close';
+import {Close} from "@material-ui/icons";
+import {describeColumns, describeImage} from "./utils";
+import CloseIcon from "@material-ui/icons/Close";
+import IconButton from "@material-ui/core/IconButton";
+import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 interface VideoPlayerPros {
-    url: string
+    url: string,
+    onClose: () => void
 }
 
-function VideoPlayer({url}: VideoPlayerPros) {
+
+function VideoPlayer({url, onClose}: VideoPlayerPros) {
     console.log(url);
+    const useStyles = makeStyles((theme: Theme) =>  createStyles({
+
+        icon: {
+            color: 'rgba(55, 55, 55, 0.54)',
+            position: "absolute",
+            top: 15,
+            right: 20,
+            width: 60,
+            height: 60
+        },
+
+    }));
+    const classes = useStyles();
     // const sourceRef = useRef<HTMLHeadingElement>(null)
     const playerStyles: CSSProperties = {
         position: "relative",
@@ -21,6 +41,12 @@ function VideoPlayer({url}: VideoPlayerPros) {
         border: "steelblue",
         background: "#fafafa",
         display: "block"
+    }
+    let closeStyle: CSSProperties = {
+
+    }
+    let onClickClose = ()=>{
+        onClose();
     }
     return (
         <div style={containerStyle}>
@@ -41,7 +67,10 @@ function VideoPlayer({url}: VideoPlayerPros) {
             {/*        type="video/mp4"*/}
             {/*    />*/}
             {/*</video>*/}
-
+            <IconButton aria-label={`close`}
+                        className={classes.icon}>
+                <CloseIcon onClick={()=>onClickClose()} />
+            </IconButton>
         </div>
     )
 }
