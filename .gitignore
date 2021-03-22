@@ -2,3 +2,7 @@ config.json
 *.npy
 .idea/
 .vscode/
+all_images/
+all_masks/
+selected_images/
+selected_masks/
