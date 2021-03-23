@@ -17,7 +17,8 @@ img_path = Path("../../videos/video_images")
 camera_views = video_df["true_camera_view"].unique()
 actions = list(filter(lambda x: x != "Not Detected", video_df['action'].unique()))
 # camera_views = camera_views[1:3]
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="Stance")
+
 # st.write(meta_data)
 def divide_chunks(l, n):
     # divide list l in chunks of size n
@@ -61,7 +62,8 @@ def main():
     #            ''',
     #     unsafe_allow_html=True
     # )
-    st.title("Video Tool - Camera Position Explorer")
+    # st.title("Video Tool - Camera Position Explorer")
+    st.title("Stance")
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True) # radio button hack
 
     selection_columns = st.beta_columns(2)

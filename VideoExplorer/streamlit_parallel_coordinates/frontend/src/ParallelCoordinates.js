@@ -8,6 +8,8 @@ import {renderQueue} from "./utils";
 function hashColumns(cols){
     return cols.map(c=>c.key).join();
 }
+// const chartColor = "#a3d2ca"
+const chartColor = "#df7861"
 export default function ParallelCoordinates({data, dimensions, setColumnFocus, onSetImageFilter, highlightImage, height, width, setColumnFilters, columnDescriptions}) {
     const [canvas, setCanvas] = useState(null);
     const [ctx, setCtx] = useState(null);
@@ -190,7 +192,6 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
                 return columnDescriptions[i].desc;
             });
         axes.on('mouseover', function (e, d) {
-                console.log(d.key);
                 setColumnFocus(d.key);
             d3.select(this).transition()
                 .duration('50')
@@ -246,7 +247,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
             });
 
             onSetImageFilter(selected.map(d=>d.file_id),actives)
-            ctx.strokeStyle = "#df7861";
+            // ctx.strokeStyle = "#df7861";
+            ctx.strokeStyle = chartColor;
             ctx.clearRect(0, 0, width, height);
             ctx.globalAlpha = d3.min([0.85 / Math.pow(selected.length, 0.3), 1]);
             render(selected);
@@ -258,8 +260,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
 
 
 
-        ctx.strokeStyle = "#df7861";
-
+        // ctx.strokeStyle = "#df7861";
+        ctx.strokeStyle = chartColor;
         ctx.clearRect(0, 0, width, height);
         ctx.globalAlpha = d3.min([1.15 / Math.pow(data.length, 0.3), 1]);
         render(data);

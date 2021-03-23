@@ -2,7 +2,14 @@ import {fabric} from "fabric";
 import {schemeTableau10, schemeSet3} from "d3-scale-chromatic"
 import {Streamlit} from 'streamlit-component-lib'
 import {keypointConfigs} from "./constants";
+
 const colorScheme = schemeSet3
+// const lineColor = "#eb5e0b";
+// const lineColor = "#91091e";
+// const lineColor = "#a3d2ca"
+const lineColor = "#df7861"
+const strokeWidth = 2;
+
 function isAroundPoint(pointer, coords) {
 
     let dist = (pointer.x - coords[0]) * (pointer.x - coords[0]) + (pointer.y - coords[1]) * (pointer.y - coords[1]);
@@ -14,16 +21,22 @@ function isAroundPoint(pointer, coords) {
     }
 }
 
-function isAroundLine(pointer, coords){
+function isAroundLine(pointer, coords) {
     let v1 = [pointer.x - coords[0], pointer.y - coords[1]];
     let v2 = [coords[2] - coords[0], coords[3] - coords[1]]
-    let d = Math.sqrt(Math.pow(v2[0], 2) + Math.pow(v2[1], 2) );
+    let d = Math.sqrt(Math.pow(v2[0], 2) + Math.pow(v2[1], 2));
     let t = (v1[0] * v2[0] + v1[1] * v2[1]) / Math.sqrt(Math.pow(v2[0], 2) + Math.pow(v2[1], 2));
     let lPower = Math.pow(v1[0], 2) + Math.pow(v1[1], 2);
     let dist = Math.sqrt(lPower - Math.pow(t, 2));
     let nearPoint = {
         x: coords[0] + v2[0] * t / d,
-        y: coords[1] + v2[1] * t /d
+        y: coords[1] + v2[1] * t / d
+    }
+
+    let vn1 = [nearPoint.x - coords[0], nearPoint.y - coords[1]];
+    let vn2 = [nearPoint.x - coords[2], nearPoint.y - coords[3]];
+    if (dotProduct(vn1, vn2) > 0) {
+        return {isAround: false, dist, lineNearPoint: null};
     }
 
     if (dist > 10) {
@@ -33,44 +46,49 @@ function isAroundLine(pointer, coords){
     }
 }
 
-function vectorLen(v){
-    return Math.sqrt(Math.pow(v[0], 2) + Math.pow(v[1], 2) );
+function vectorLen(v) {
+    return Math.sqrt(Math.pow(v[0], 2) + Math.pow(v[1], 2));
 }
 
-function coordsAdd(a, b){
-    let r = a.map((v, i)=> v+ b[i]);
+function coordsAdd(a, b) {
+    let r = a.map((v, i) => v + b[i]);
     return r;
 }
-function coordsSubtract(a, b){
-    return a.map((v, i)=> v - b[i]);
+
+function coordsSubtract(a, b) {
+    return a.map((v, i) => v - b[i]);
 }
 
-function vectorDivide(a, b){
-    if (b === 0){
+function vectorDivide(a, b) {
+    if (b === 0) {
         return [0, 0]
     }
-    return a.map(v=>v/b);
+    return a.map(v => v / b);
 }
-function vectorMultiply(a, b){
-    return a.map(v=>v*b);
+
+function vectorMultiply(a, b) {
+    return a.map(v => v * b);
 }
-function getAngle(v){
-    let angle =  Math.atan2(v[1], v[0]);
+
+function getAngle(v) {
+    let angle = Math.atan2(v[1], v[0]);
     return angle
 }
-function dotProduct(v1, v2){
-    return v1[0]*v2[0] + v1[1]*v2[1];
+
+function dotProduct(v1, v2) {
+    return v1[0] * v2[0] + v1[1] * v2[1];
 }
-function calculateArcParamsAttached(origin, dest, lineCoords){
+
+function calculateArcParamsAttached(origin, dest, lineCoords) {
     let lineVec = coordsSubtract(lineCoords.dest, lineCoords.src);
     let lAddition = 25;
     let edgeL = 50;
     let v = coordsSubtract(dest, origin)
 
     let dot = dotProduct(lineVec, v);
-    let direction = dot > 0?1:-1;
+    let direction = dot > 0 ? 1 : -1;
     let center = lineCoords.dest
-    if (dot < 0){
+    if (dot < 0) {
         center = lineCoords.src;
     }
     let vo = [-v[1], v[0]];
@@ -80,7 +98,7 @@ function calculateArcParamsAttached(origin, dest, lineCoords){
     // L = Math.round(dist/L) * L;
     // let voL = Math.sqrt(L*L - Math.pow(dist/2, 2));
     let voL = vectorLen(v);
-    let L = Math.sqrt(Math.pow(voL, 2)+Math.pow(dist/2, 2))
+    let L = Math.sqrt(Math.pow(voL, 2) + Math.pow(dist / 2, 2))
     L = voL;
     vo = vectorMultiply(vo, voL);
     let pointC = coordsAdd(origin, vectorDivide(v, 2))
@@ -92,21 +110,22 @@ function calculateArcParamsAttached(origin, dest, lineCoords){
     let endAngle = getAngle(v2);
     return {center: center, startAngle, endAngle, L};
 }
-function calculateArcParams(origin, dest, lineCoords){
+
+function calculateArcParams(origin, dest, lineCoords) {
     let lineVec = coordsSubtract(lineCoords.dest, lineCoords.src);
     let lAddition = 25;
     let edgeL = 50;
     let v = coordsSubtract(dest, origin)
 
     let dot = dotProduct(lineVec, v);
-    let direction = dot > 0?1:-1;
+    let direction = dot > 0 ? 1 : -1;
     let center = lineCoords.dest
-    if (dot < 0){
+    if (dot < 0) {
         center = lineCoords.src;
     }
     let vo = [-v[1], v[0]];
     let dotB = dotProduct(vo, lineVec)
-    if (dotB<0){
+    if (dotB < 0) {
         vo = vectorMultiply(vo, -1)
     }
     vo = vectorMultiply(vo, direction)
@@ -115,19 +134,20 @@ function calculateArcParams(origin, dest, lineCoords){
     // L = Math.round(dist/L) * L;
     // let voL = Math.sqrt(L*L - Math.pow(dist/2, 2));
     let voL = vectorLen(v);
-    let L = Math.sqrt(Math.pow(voL, 2)+Math.pow(dist/2, 2))
+    let L = Math.sqrt(Math.pow(voL, 2) + Math.pow(dist / 2, 2))
     vo = vectorMultiply(vo, voL);
     let pointC = coordsAdd(origin, vectorDivide(v, 2))
     pointC = coordsAdd(pointC, vo);
     let v1 = coordsSubtract(origin, pointC);
     let v2 = coordsSubtract(dest, pointC);
-    let startAngle = (dot*dotB>0)?getAngle(v1):getAngle(v2)
-    let endAngle = (dot*dotB>0)?getAngle(v2):getAngle(v1);
+    let startAngle = (dot * dotB > 0) ? getAngle(v1) : getAngle(v2)
+    let endAngle = (dot * dotB > 0) ? getAngle(v2) : getAngle(v1);
     return {center: pointC, startAngle, endAngle, L};
 }
 
 
 var lines = [];
+
 function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
     let line = null;
     let isDown = false;
@@ -135,6 +155,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
     let startJoint = -1;
     let metricStartLine = -1;
     let arc = null;
+
     function aroundWhichPoint(pointer) {
         let selectedIdx = -1;
         let minDist = -1;
@@ -154,22 +175,22 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
         return selectedIdx;
     }
 
-    function aroundWhichLine(pointer){
-         let selectedIdx = -1;
+    function aroundWhichLine(pointer) {
+        let selectedIdx = -1;
         let minDist = -1;
         let nearPoint = null;
         for (let i in lines) {
             let lineData = lines[i];
             let src = lineData.src;
             let dest = lineData.dest;
-            let srcPoint = fixedPoints.filter(d=>d.name===src)[0];
-            let destPoint = fixedPoints.filter(d=>d.name===dest)[0];
+            let srcPoint = fixedPoints.filter(d => d.name === src)[0];
+            let destPoint = fixedPoints.filter(d => d.name === dest)[0];
             let coords = [
                 srcPoint.coords[0], srcPoint.coords[1],
                 destPoint.coords[0], destPoint.coords[1]
             ];
             let point = fixedPoints[i];
-            let {isAround, dist,  lineNearPoint} = isAroundLine(pointer, coords);
+            let {isAround, dist, lineNearPoint} = isAroundLine(pointer, coords);
             if (isAround) {
                 if (minDist < 0 | minDist > dist) {
                     dist = minDist;
@@ -180,7 +201,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
             }
         }
         if (selectedIdx < 0) {
-            return {selectedIdx, nearPoint: null};
+            return {lineIdx: selectedIdx, nearPoint: null};
         }
         return {lineIdx: selectedIdx, nearPoint};
     }
@@ -197,7 +218,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
             let lineData = {
                 src: fixedPoints[pointIdx].name,
                 dest: fixedPoints[startJoint].name,
-                color: "grey"
+                color: "#eb5e0b"
             }
             lines.push(lineData);
             line = null;
@@ -210,7 +231,8 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
         let pointIdx = aroundWhichPoint(pointer);
         if (pointIdx >= 0) {
             line = new fabric.Line(points, {
-                stroke: "#eeeeee",
+                stroke: lineColor,
+                strokeWidth: strokeWidth,
                 hasControls: false,
                 hasBorders: false,
                 lockMovementX: false,
@@ -226,66 +248,85 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
             isDown = true;
             startJoint = pointIdx;
             return true;
-        }else{
+        } else {
             return false;
         }
 
     }
+
     function finishDrawingMetric(pointer) {
         let {lineIdx, nearPoint} = aroundWhichLine(pointer);
-        if(lineIdx === metricStartLine){
-            line.set({
-                stroke: colorScheme[lines.length%10],
-                x1: fixedPoints.filter(d=>d.name ===lines[metricStartLine].src)[0].coords[0],
-                y1: fixedPoints.filter(d=>d.name ===lines[metricStartLine].src)[0].coords[1],
-                x2: fixedPoints.filter(d=>d.name ===lines[metricStartLine].dest)[0].coords[0],
-                y2: fixedPoints.filter(d=>d.name ===lines[metricStartLine].dest)[0].coords[1],
-            })
-            arc.set({
-                stroke: null
-            })
-        }
-        else if (lineIdx >= 0) {
-            line.setCoords();
-            line.set({
-                x2: nearPoint.x,
-                y2: nearPoint.y
-            })
-            let srcCoords = fixedPoints.filter(d=>d.name === lines[metricStartLine].src)[0].coords
-            let destCoords = fixedPoints.filter(d=>d.name === lines[metricStartLine].dest)[0].coords
-            let lineCoords = {
-                src: srcCoords,
-                dest: destCoords
+        // canvas.selectable = false;
+        isMetricDrawing = false;
+        if (lineIdx < 0) {
+
+            alert("Please select a line");
+            arc.set(
+                {"stroke": null}
+            );
+            line = null;
+
+        } else {
+            if (lineIdx === metricStartLine) {
+                line.set({
+                    stroke: colorScheme[lines.length % 10],
+                    x1: fixedPoints.filter(d => d.name === lines[metricStartLine].src)[0].coords[0],
+                    y1: fixedPoints.filter(d => d.name === lines[metricStartLine].src)[0].coords[1],
+                    x2: fixedPoints.filter(d => d.name === lines[metricStartLine].dest)[0].coords[0],
+                    y2: fixedPoints.filter(d => d.name === lines[metricStartLine].dest)[0].coords[1],
+                })
+                arc.set({
+                    stroke: null
+                })
+            } else if (lineIdx >= 0) {
+                line.setCoords();
+                line.set({
+                    x2: nearPoint.x,
+                    y2: nearPoint.y
+                })
+                let srcCoords = fixedPoints.filter(d => d.name === lines[metricStartLine].src)[0].coords
+                let destCoords = fixedPoints.filter(d => d.name === lines[metricStartLine].dest)[0].coords
+                let lineCoords = {
+                    src: srcCoords,
+                    dest: destCoords
+                }
+                let {
+                    center,
+                    startAngle,
+                    endAngle,
+                    L
+                } = calculateArcParams([line.x1, line.y1], [nearPoint.x, nearPoint.y], lineCoords);
+                arc.set({
+                    radius: L,
+                    left: center[0],
+                    top: center[1],
+
+                    startAngle, endAngle
+                })
             }
-            let {center, startAngle, endAngle, L} = calculateArcParams([line.x1, line.y1], [nearPoint.x, nearPoint.y], lineCoords);
-            arc.set({
-                radius: L,
-                left: center[0],
-                top: center[1],
-                startAngle, endAngle
+
+            let metric = {}
+            if (lineIdx === metricStartLine) {
+                metric['type'] = "Distance";
+                metric['lines'] = [lineIdx].map(d => lines[d])
+            } else {
+                metric['type'] = "Angle";
+                metric['lines'] = [lineIdx, metricStartLine].map(d => lines[d])
+            }
+            addAMetric({
+                type: metric['type'],
+                name: "default name",
+                lines: metric['lines'],
+                visibility: true
+
             })
         }
         isMetricDrawing = false;
         line = null;
-        let metric = {
 
-        }
-        if(lineIdx === metricStartLine){
-            metric['type'] = "Distance";
-            metric['lines'] = [lineIdx].map(d=>lines[d])
-        }else{
-            metric['type'] = "Angle";
-            metric['lines'] = [lineIdx, metricStartLine].map(d=>lines[d])
-        }
-        addAMetric({
-            type: metric['type'],
-            name: "default name",
-            lines: metric['lines'],
-            visibility: true
-
-        })
     }
-    function startDrawingMetric(pointer){
+
+    function startDrawingMetric(pointer) {
         let points = [pointer.x, pointer.y, pointer.x, pointer.y];
         let {lineIdx, nearPoint} = aroundWhichLine(pointer);
         if (lineIdx >= 0) {
@@ -306,6 +347,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
                 left: nearPoint.x,
                 top: nearPoint.y,
                 stroke: colorScheme[lines.length % 10],
+                strokeWidth: strokeWidth,
                 selectable: false,
                 originX: "center",
                 originY: "center",
@@ -322,7 +364,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
             metricStartLine = lineIdx;
             // startJoint = pointIdx;
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -341,15 +383,14 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
             let pointer = canvas.getPointer(options.e);
             finishLine(pointer)
 
-        }else if(isMetricDrawing){
+        } else if (isMetricDrawing) {
             let pointer = canvas.getPointer(options.e);
             finishDrawingMetric(pointer)
 
-        }
-        else {
+        } else {
             let pointer = canvas.getPointer(options.e);
             let success = startLine(pointer)
-            if(!success){
+            if (!success) {
                 startDrawingMetric(pointer)
             }
         }
@@ -374,11 +415,11 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
 
     function onMouseMove(o) {
         if (!isDown && !isMetricDrawing) return;
-        if(isMetricDrawing){
+        if (isMetricDrawing) {
             let pointer = canvas.getPointer(o.e);
             let pointCoords = [pointer.x, pointer.y];
-            let srcCoords = fixedPoints.filter(d=>d.name === lines[metricStartLine].src)[0].coords
-            let destCoords = fixedPoints.filter(d=>d.name === lines[metricStartLine].dest)[0].coords
+            let srcCoords = fixedPoints.filter(d => d.name === lines[metricStartLine].src)[0].coords
+            let destCoords = fixedPoints.filter(d => d.name === lines[metricStartLine].dest)[0].coords
             let lineCoords = {
                 src: srcCoords,
                 dest: destCoords
@@ -404,6 +445,7 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
         });
         canvas.requestRenderAll();
     }
+
     //end mouse:move
     canvas.on('mouse:down', onMouseDown);
     canvas.on('mouse:dblclick', onDblClick);
