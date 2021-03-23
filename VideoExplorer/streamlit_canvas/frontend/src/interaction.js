@@ -260,11 +260,11 @@ function onDrawLine(canvas, fixedPoints, styles, addAMetric) {
         isMetricDrawing = false;
         if (lineIdx < 0) {
 
+            line = null;
             alert("Please select a line");
             arc.set(
                 {"stroke": null}
             );
-            line = null;
 
         } else {
             if (lineIdx === metricStartLine) {

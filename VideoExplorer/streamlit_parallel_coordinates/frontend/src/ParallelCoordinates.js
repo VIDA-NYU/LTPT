@@ -4,6 +4,7 @@ import {scaleBand, scaleLinear} from "d3-scale"
 import {axisLeft} from "d3";
 import "./ParallelCoordinates.css"
 import {renderQueue} from "./utils";
+import Typography from "@material-ui/core/Typography";
 // import {} from "d3"
 function hashColumns(cols){
     return cols.map(c=>c.key).join();
@@ -14,16 +15,18 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     const [canvas, setCanvas] = useState(null);
     const [ctx, setCtx] = useState(null);
     // let height = 400;
-    let innerHeight = height - 2;
     let margin = {
-        left: 90,
-        right: 20,
-        top: 60,
-        bottom: 20
+        left: 50,
+        right: 10,
+        top: 50,
+        bottom: 5
     }
+
+    let innerHeight = height - margin.top - margin.bottom;
+    let innerWidth = width - margin.left - margin.right
     let xScale = d3.scaleBand()
         .domain(dimensions.map(d => d.key))
-        .range([0, width * (dimensions.length + 1) / dimensions.length ]);
+        .range([0, innerWidth * (dimensions.length + 1) / dimensions.length ]);
     let yAxis = d3.axisLeft();
 
     const devicePixelRatio = 1;
@@ -81,7 +84,7 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     //     .style("width", width + margin.left + margin.right + "px")
     //     .style("height", height + margin.top + margin.bottom + "px");
     dimensions = dimensions.map(d => {
-        let yScale = scaleLinear().domain(types[d.type].domain).range([0, height])
+        let yScale = scaleLinear().domain(types[d.type].domain).range([0, innerHeight])
         return {
             ...d,
             scale: yScale,
@@ -148,10 +151,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
         setCanvas(_canvas);
         let ctx = _canvas.node().getContext("2d");
         setCtx(ctx);
-        console.log("run init")
     }, [columnHash])
     useEffect(() => {
-        console.log("draw")
         let render = renderQueue(draw).rate(30);
         if (ctx === null){
             return
@@ -160,8 +161,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
             return ;
         }
         let svg = d3.select("#parcoords-svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
+            .attr("width", innerWidth + margin.left + margin.right)
+            .attr("height", innerHeight + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -282,25 +283,44 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     }, [ctx, canvas, highlightImage])
 
     let canvasStyles = {
-        width: width + "px",
-        height: height + "px",
+        width: innerWidth + "px",
+        height: innerHeight + "px",
         marginTop: margin.top,
         marginLeft: margin.left
     }
-    let fillBoxStyles = {
-        width: width + margin.left + margin.right,
-        height: 10
+    let visWrapperStyle = {
+        width: width + "px",
+        height: height + "px",
+        // position: "relative",
+        // left: 0,
+        // top: 30
+    }
+    let containerStyle = {
+        display: "flex",
+        flexDirection: "column"
     }
 
+    let headerStyle = {
+        marginLeft: "45px",
+            marginTop: "10px",
+            marginBottom: "5px",
+        textAlign: "left"
+
+        // fontSize: 14,
+    };
+
     return (
-        <div>
-            <div style={fillBoxStyles} ></div>
+        <div style={containerStyle}>
+            <Typography style={headerStyle} variant="h5" component="h4">
+                Parallel Coordinates
+            </Typography>
             <div className={"parcoords"} width={width + margin.left + margin.right}
-                 height={height + margin.top + margin.bottom}>
+                 style = {visWrapperStyle}
+                 height={height + margin.top + margin.bottom}   >
 
                 <canvas id={"parcoords-canvas"}
-                        width={width * devicePixelRatio}
-                        height={height * devicePixelRatio}
+                        width={innerWidth + "px"}
+                        height={innerHeight + "px"}
                         style={canvasStyles}
 
                 >

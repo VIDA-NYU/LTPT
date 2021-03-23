@@ -18,6 +18,20 @@ camera_views = video_df["true_camera_view"].unique()
 actions = list(filter(lambda x: x != "Not Detected", video_df['action'].unique()))
 # camera_views = camera_views[1:3]
 st.set_page_config(layout="wide", page_title="Stance")
+# st.markdown(
+#     """
+#     <style>
+#     .reportview-container {
+#         background: #fdfffe
+#
+#     }
+#    .sidebar .sidebar-content {
+#         background: #edf0ef
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 # st.write(meta_data)
 def divide_chunks(l, n):
@@ -78,7 +92,7 @@ def main():
     #     ("Correct", "Incorrect"))
     # clear_button = st.button("clear")
     correct_pred_option = "Correct"
-    columns = st.beta_columns((4, 3))
+    columns = st.beta_columns((4, 4))
     image_columns = columns[1:]
     left_column = columns[0]
     right_column = columns[1]

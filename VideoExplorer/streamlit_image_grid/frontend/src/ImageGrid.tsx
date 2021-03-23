@@ -15,8 +15,8 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import Select from '@material-ui/core/Select';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-
-
+import Paper from "@material-ui/core/Paper";
+import Card from '@material-ui/core/Card'
 
 
 
@@ -44,6 +44,14 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                 justifyContent: 'space-around',
                 overflow: 'hidden',
                 backgroundColor: theme.palette.background.paper,
+                // paddingTop: "10px",
+                paddingBottom: "20px",
+                // paddingLeft: "1px",
+                // paddingRight: "1px",
+                marginLeft: "10px",
+                marginTop: "10px",
+                marginRight: "1px",
+                marginBottom: "10px"
             },
             gridList: {
                 width: 960,
@@ -63,7 +71,15 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "flex-start",
-                width: "100%"
+                width: "100%",
+                background: "#F1F1F1",
+                paddingLeft: "28px",
+                paddingBottom: "4px",
+                alignItems: "flex-end"
+            },
+            headerItem: {
+                marginLeft: "5px",
+                marginBottom: "3px"
             }
 
         }),
@@ -122,7 +138,7 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
     }
 
     return (
-        <div className={classes.root}>
+        <Card className={classes.root}>
             <div className={classes.header}>
                 <FormControl className={classes.formControl}>
                     <InputLabel id="demo-simple-select-label">Metric</InputLabel>
@@ -137,7 +153,7 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                         }
                     </Select>
                 </FormControl>
-                <FormControlLabel
+                <FormControlLabel className={classes.headerItem}
                     control={
                         <Switch
                             checked={sorting===SortingWay.High2Low}
@@ -148,7 +164,7 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                     }
                     label="High"
                 />
-                <FormControlLabel
+                <FormControlLabel className={classes.headerItem}
                     control={
                         <Switch
                             checked={sorting===SortingWay.Low2High}
@@ -197,7 +213,7 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                     )
                 })}
             </GridList>
-        </div>
+        </Card>
     )
 
 }

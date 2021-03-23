@@ -8,16 +8,33 @@ import {onDrawLine} from './interaction';
 import {MetricTable} from "./MetricTable"
 import {IEvent} from "fabric/fabric-impl";
 import {type} from "os";
-import {keypointConfigs, auxiliaryKeypointConfigs, auxiliaryLineConfigs, PointConfig, CanvasPoint, decorationShapeConfigs, ShapeConfig} from './constants';
+import {
+    keypointConfigs,
+    auxiliaryKeypointConfigs,
+    auxiliaryLineConfigs,
+    PointConfig,
+    CanvasPoint,
+    decorationShapeConfigs,
+    ShapeConfig
+} from './constants';
+import Card from '@material-ui/core/Card';
+import CardHeader from "@material-ui/core/CardHeader"
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import Typography from '@material-ui/core/Typography';
+import {makeStyles} from '@material-ui/core/styles';
+import Paper from '@material-ui/core/Paper'
 
 enum MetricType {
-    Angle="Angle", Distance="Distance"
+    Angle = "Angle", Distance = "Distance"
 }
+
 interface Line {
     src: string,
     dest: string,
     color: string
 }
+
 interface Metric {
     name: string,
     type: MetricType,
@@ -27,7 +44,7 @@ interface Metric {
 
 }
 
-function CanvasComponent({args} : ComponentProps) {
+function CanvasComponent({args}: ComponentProps) {
     // const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasObj, setCanvas] = useState<fabric.Canvas>();
     // const [backgroundCanvas, setBackgroundCanvas] = useState<fabric.Canvas>();
@@ -36,6 +53,9 @@ function CanvasComponent({args} : ComponentProps) {
     const [metricCount, setMetricCount] = useState<number>(0)
     let canvasHeight = 400;
     let canvasWidth = 400;
+    const [width, setWidth] = useState(400);
+    const [height, setHeight] = useState(400);
+
     let updateStatus = (metric: Metric) => {
         metric.id = "#" + metrics.length.toString();
         setMetrics([
@@ -47,7 +67,7 @@ function CanvasComponent({args} : ComponentProps) {
             metrics: [...metrics, metric]
         })
     }
-    let updateMetricStatus = (newData: Array<Metric>)=>{
+    let updateMetricStatus = (newData: Array<Metric>) => {
         setMetrics(newData);
         Streamlit.setComponentValue({
             // data: lines,
@@ -60,16 +80,16 @@ function CanvasComponent({args} : ComponentProps) {
     let styles = {
         hintColor, skeletonColor
     }
-    let transformCoords = (coords: Array<number>)=>{
-        return [coords[0] * canvasWidth, coords[1] * canvasHeight];
+    let transformCoords = (coords: Array<number>) => {
+        return [coords[0] * width, coords[1] * height];
     }
-    let keypointsOnCanvas = keypointConfigs.map(d=>{
+    let keypointsOnCanvas = keypointConfigs.map(d => {
         return {
             ...d,
             coords: transformCoords(d.coords)
         }
     });
-    useEffect(()=>{
+    useEffect(() => {
         // const c = new fabric.Canvas("background-canvas", {
         //     enableRetinaScaling: false
         // });
@@ -95,10 +115,28 @@ function CanvasComponent({args} : ComponentProps) {
         //
         // setBackgroundCanvas(c);
     }, [])
-    useEffect(()=>{
+    useEffect(() => {
         Streamlit.setFrameHeight()
 
     })
+    useEffect(() => {
+        let resizeTimer: any;
+        const handleResize = () => {
+            // clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                // setWidth(window.innerWidth);
+                // setHeight(window.innerHeight);
+                // canvasObj?.setWidth(window.innerWidth)
+            }, 300);
+            console.log(window.innerHeight)
+            console.log("hello world");
+        };
+        window.addEventListener("resize", handleResize);
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
     useEffect(() => {
 
         const canvas = new fabric.Canvas("interaction-canvas", {
@@ -110,14 +148,15 @@ function CanvasComponent({args} : ComponentProps) {
         let circleStroke = "#666"
         let lineColor = "red"
 
-        function makeCircle(coords: Array<number>){
+        function makeCircle(coords: Array<number>) {
             let circle = new fabric.Circle({
-                radius: 5, fill: circleFill, left: coords[0], top: coords[1], stroke: circleStroke, selectable:false,
+                radius: 5, fill: circleFill, left: coords[0], top: coords[1], stroke: circleStroke, selectable: false,
                 originX: "center",
                 originY: "center",
             });
             return circle
         }
+
         function makeLine(coords: Array<number>) {
             // coords = coords.map(d=>d+2.5)
             return new fabric.Line(coords, {
@@ -130,16 +169,23 @@ function CanvasComponent({args} : ComponentProps) {
                 originY: "center",
             });
         }
-        function makeCoveringCircle(coords: Array<number>){
+
+        function makeCoveringCircle(coords: Array<number>) {
             let circle = new fabric.Circle({
-                radius: 20, fill: hintColor, left: coords[0], top: coords[1], stroke: styles.skeletonColor, selectable:false,
+                radius: 20,
+                fill: hintColor,
+                left: coords[0],
+                top: coords[1],
+                stroke: styles.skeletonColor,
+                selectable: false,
                 originX: "center",
                 originY: "center",
                 opacity: 0.01,
             });
             return circle
         }
-        function makeEye(config: ShapeConfig){
+
+        function makeEye(config: ShapeConfig) {
 
             let circle = new fabric.Circle({
                 radius: 12,
@@ -155,7 +201,8 @@ function CanvasComponent({args} : ComponentProps) {
             })
             canvas.add(circle);
         }
-        function makeMouth(config: ShapeConfig){
+
+        function makeMouth(config: ShapeConfig) {
             let circle = new fabric.Circle({
                 radius: 10,
                 fill: undefined,
@@ -170,7 +217,8 @@ function CanvasComponent({args} : ComponentProps) {
             })
             canvas.add(circle);
         }
-        function makeHeadCircle(config: ShapeConfig){
+
+        function makeHeadCircle(config: ShapeConfig) {
             let circle = new fabric.Circle({
                 radius: 36,
                 fill: undefined,
@@ -185,13 +233,13 @@ function CanvasComponent({args} : ComponentProps) {
         }
 
 
-        let auxiliaryPointsOnCanvas = auxiliaryKeypointConfigs.map(d=>{
+        let auxiliaryPointsOnCanvas = auxiliaryKeypointConfigs.map(d => {
             return {
                 ...d,
                 coords: transformCoords(d.coords)
             }
         });
-        let decorationShapeOnCanvas = decorationShapeConfigs.map(d=>{
+        let decorationShapeOnCanvas = decorationShapeConfigs.map(d => {
             return {
                 ...d,
                 coords: transformCoords(d.coords),
@@ -199,12 +247,12 @@ function CanvasComponent({args} : ComponentProps) {
         })
 
 
-        for (let keypointConfig of keypointConfigs){
+        for (let keypointConfig of keypointConfigs) {
             let coords = keypointConfig.coords;
-            coords = [coords[0] * canvasWidth, coords[1]*canvasHeight];
+            coords = [coords[0] * canvasWidth, coords[1] * canvasHeight];
             let circle = makeCircle(coords);
 
-            if(keypointConfig.clickable){
+            if (keypointConfig.clickable) {
 
                 canvas.add(circle);
                 let coverCircle = makeCoveringCircle(coords);
@@ -229,11 +277,11 @@ function CanvasComponent({args} : ComponentProps) {
         // onDrawLine(canvas, keypointsOnCanvas, styles, updateStatus);
 
     }, []);
-    useEffect(()=>{
-        if (!canvasObj){
+    useEffect(() => {
+        if (!canvasObj) {
             return;
         }
-        onDrawLine(canvasObj, keypointsOnCanvas.filter(d=>d.clickable), styles, updateStatus)
+        onDrawLine(canvasObj, keypointsOnCanvas.filter(d => d.clickable), styles, updateStatus)
     }, [canvasObj, metrics]);
     const div = useCallback(node => {
         if (node !== null) {
@@ -251,16 +299,33 @@ function CanvasComponent({args} : ComponentProps) {
         display: "flex",
         flexDirection: "row",
         width: "800",
+        background: "white",
+        flexWrap: "wrap",
+        paddingTop: "10px",
+        paddingBottom: "20px",
+        paddingLeft: "1px",
+        paddingRight: "1px"
     }
     const tableStyles: CSS.Properties = {
         width: "550px",
+        flexGrow: 2,
+        flexBasis: "auto",
+        marginRight: "30px",
+        paddingLeft: "2px",
+        paddingRight: "2px"
+        // paddingTop: "20px"
+        // paddingRight:
+        // marginLeft: "30px"
         // overflowY: "scroll"
     }
     const canvasContainerStyles: CSS.Properties = {
-        width: canvasWidth.toString() + "px",
-        height: canvasHeight.toString() + "px",
-        marginTop: "100",
-        paddingTop: "100px"
+        width: width + "px",
+        height: "400px",
+        background: "#edf0ef",
+        // width: canvasWidth.toString() + "px",
+        // height: canvasHeight.toString() + "px",
+
+
     }
     let canvasMargin = {
         top: 20
@@ -269,55 +334,93 @@ function CanvasComponent({args} : ComponentProps) {
         position: "absolute",
         top: 0,
         left: canvasWidth / 2 - 170,
-        transform: "translate(" + (canvasWidth/2 ) + ", 0)",
+        transform: "translate(" + (canvasWidth / 2) + ", 0)",
         zIndex: 1,
     }
+    let metricDefinitionPanelStyle: CSSProperties = {
+        // paddingTop: "100px",
+        // paddingTop: "100px",
+        // background: "#edf0ef",
+        marginRight: "40px",
+        display: "flex",
+        flexDirection: "column"
+    }
+    const useStyles = makeStyles({
+        title: {
+            marginLeft: "15px",
+            marginTop: "10px",
+            marginBottom: "5px",
+
+            // fontSize: 14,
+        },
+        canvasWrapper: {
+            position: "relative",
+            top: "0px",
+            left: "0px",
+
+        }
+
+    });
+    const classes = useStyles();
+
     return (
         <div ref={div} style={containerStyles}>
-            <div style={canvasContainerStyles}>
+            <Paper style={metricDefinitionPanelStyle}>
+                <Typography className={classes.title} variant="h5" component="h2">
+                    Metric Definition
+                </Typography>
 
-                <div
-                    style={{
-                        position: "absolute",
-                        top: canvasMargin.top,
-                        left: 0,
-                        zIndex: 1,
-                        width: canvasWidth,
-                        height: canvasWidth
-                    }}
-                >
+                <div style={canvasContainerStyles}>
+                    <div className={classes.canvasWrapper}>
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: canvasMargin.top,
+                                left: 0,
+                                zIndex: 1,
+                                width: width,
+                                height: height
+                            }}
+                        >
 
-                    <img src={"/body.png"} width={340} style={imgStyles} />
-                {/*<canvas*/}
-                {/*    // id={"interaction-canvas"}*/}
-                {/*    id={"background-canvas"}*/}
-                {/*    width={canvasWidth}*/}
-                {/*    height={canvasHeight}*/}
-                {/*>*/}
+                            <img src={"/body.png"} width={340} style={imgStyles}/>
+                            {/*<canvas*/}
+                            {/*    // id={"interaction-canvas"}*/}
+                            {/*    id={"background-canvas"}*/}
+                            {/*    width={canvasWidth}*/}
+                            {/*    height={canvasHeight}*/}
+                            {/*>*/}
 
-                {/*</canvas>*/}
+                            {/*</canvas>*/}
+                        </div>
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: canvasMargin.top,
+                                left: 0,
+                                zIndex: 12,
+                            }}
+                        >
+                            <canvas
+                                id={"interaction-canvas"}
+                                // id={"background-canvas"}
+                                // ref={canvasRef}
+                                width={width}
+                                height={height}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <div
-                    style={{
-                        position: "absolute",
-                        top: canvasMargin.top,
-                        left: 0,
-                        zIndex: 12,
-                    }}
-                >
-                    <canvas
-                    id={"interaction-canvas"}
-                        // id={"background-canvas"}
-                    // ref={canvasRef}
-                    width={canvasWidth}
-                    height={canvasHeight}
-                />
-                </div>
-            </div>
 
-            <div style={tableStyles}>
+            </Paper>
+
+            <Card style={tableStyles}>
+                <Typography className={classes.title} variant="h5" component="h4">
+                    Metric Table
+                </Typography>
+
                 <MetricTable metrics={metrics} setData={updateMetricStatus}></MetricTable>
-            </div>
+            </Card>
 
         </div>
     );

@@ -4,12 +4,58 @@ import {scaleBand, scaleLinear} from "d3-scale"
 import {axisLeft} from "d3";
 import {VegaLite, Vega} from "react-vega";
 import {describeColumn} from "./utils";
-
-export default function BarDistribution({data, column, height, imageFilter, columnFilters, columnDescription}){
+import Typography  from "@material-ui/core/Typography";
+export default function BarDistribution({data, column, imageFilter, columnFilters, columnDescription, width, height}){
     let table = {
         table: data
     }
 
+    useEffect(() => {
+        let resizeTimer;
+        const handleResize = () => {
+            // clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                // setWidth(window.innerWidth);
+                // setHeight(window.innerHeight);
+                // canvasObj?.setWidth(window.innerWidth)
+            }, 300);
+            // setHeight(window.innerHeight);
+            console.log(window.innerHeight)
+            console.log("hello wsorld");
+        };
+        window.addEventListener("resize", handleResize);
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
+    let padding = {
+        top: 1,
+        bottom: 5,
+        right: 53,
+        left: 5
+    }
+    let containerStyle = {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+
+        borderLeft: "1px solid grey"
+    }
+    let visContainerStyle = {
+        // paddingTop: padding.top,
+        paddingTop: padding.top + "px",
+        paddingBottom: padding.bottom + "px",
+        paddingRight: padding.right + "px",
+        paddingLeft: padding.left + "px",
+    }
+    let headerStyle = {
+        paddingLeft: "15px",
+        marginTop: "10px",
+        marginBottom: "5px",
+        textAlign: "left"
+        // fontSize: 14,
+    };
     let domain = [0, 180]
     let columnName = column.key;
     let thisFilter = columnFilters.filter(d=>d.dimension.key === columnName);
@@ -63,12 +109,14 @@ export default function BarDistribution({data, column, height, imageFilter, colu
 
 
     },[columnFilters, columnName])
+
+
     let columnDesc = describeColumn(column);
     let spec = {
-        height: height,
-        width: height,
+        height: height - padding.top - padding.bottom,
+        width: width - padding.left - padding.right,
         "data": {"name": "table"},
-        title: "Distribution of " + columnDescription.desc,
+        // title: "Distribution of " + columnDescription.desc,
         "layer": [
         {
             "params": [{
@@ -101,9 +149,16 @@ export default function BarDistribution({data, column, height, imageFilter, colu
     }
 
     return (
-        <div>
-            <Vega spec={spec} data={table} renderer={"svg"}/>
+        <div style={containerStyle}>
+            <Typography style={headerStyle} variant="h5" component="h4">
+                { columnDescription.desc}
+            </Typography>
+            <div style={visContainerStyle}>
+
+                <Vega spec={spec} data={table} renderer={"svg"}/>
+            </div>
         </div>
+
     )
 
 }

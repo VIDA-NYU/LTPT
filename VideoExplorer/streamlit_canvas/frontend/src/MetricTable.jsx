@@ -9,16 +9,24 @@ import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Checkbox from '@material-ui/core/Checkbox';
+import Paper from '@material-ui/core/Paper'
 import {ThemeProvider} from '@material-ui/core/styles';
-import { createMuiTheme, makeStyles } from '@material-ui/core/styles';
+import {createMuiTheme, makeStyles} from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 
 const useStyles = makeStyles({
     table: {
         minWidth: 530,
         maxHeight: 400,
+        background: "#EEEEEE",
+        borderRadius: "2px",
+        border: "none"
 
     },
+    headers: {
+        background: "black",
+        borderRadius: "25%",
+    }
 });
 
 const theme = createMuiTheme({
@@ -67,19 +75,20 @@ const EditableCell = ({
 
 function MetricTable({metrics, setData}) {
     const classes = useStyles();
-    function describeMetric(metric){
-        let lineText = metric.lines.map(d=>d['src'] + "-" + d['dest'])
-        if (metric.type === "Angle"){
+
+    function describeMetric(metric) {
+        let lineText = metric.lines.map(d => d['src'] + "-" + d['dest'])
+        if (metric.type === "Angle") {
             return "Angle between " + lineText[0] + " and " + lineText[1]
-        }else{
+        } else {
             return "Distance of " + lineText[0]
         }
     }
 
-    let data = metrics.map(m=>{
+    let data = metrics.map(m => {
         return {
             name: m.name,
-            id:  m.id?  m.id.toString(): "0",
+            id: m.id ? m.id.toString() : "0",
             type: m.type,
             description: describeMetric(m),
             visibility: m.visibility
@@ -101,21 +110,21 @@ function MetricTable({metrics, setData}) {
             })
         )
     }
-    const updateVisibility = (e, newvalue) =>{
+    const updateVisibility = (e, newvalue) => {
         let rowId = e.target.id.slice(3);
-        let newData =metrics.map(m=>{
-            if(m.id===rowId){
+        let newData = metrics.map(m => {
+            if (m.id === rowId) {
                 return {
                     ...m,
                     visibility: newvalue,
                 }
-            }else{
+            } else {
                 return m
             }
         });
-        if(newData.filter(d=>d.visibility).length === 0){
+        if (newData.filter(d => d.visibility).length === 0) {
             alert("You need to keep at least one metric!")
-        }else{
+        } else {
             setData(newData);
         }
         // setData()
@@ -129,6 +138,7 @@ function MetricTable({metrics, setData}) {
         table: {
             minWidth: 700
         },
+        headers: {},
         tablecell: {
             fontSize: '40pt'
         }
@@ -166,70 +176,72 @@ function MetricTable({metrics, setData}) {
         rows,
         prepareRow,
     } = tableInstance
-
+    const tmpStyle = {
+        borderRadius: "200px"
+    }
     return (
         <div>
             <ThemeProvider theme={theme}>
 
                 <CssBaseline/>
-                <TableContainer className={classes.table}>
-                <MaUTable  {...getTableProps()} stickyHeader  >
-                    <TableHead>
-                        {// Loop over the header rows
-                            headerGroups.map(headerGroup => (
-                                // Apply the header row props
-                                <TableRow {...headerGroup.getHeaderGroupProps()}>
-                                    {// Loop over the headers in each row
-                                        headerGroup.headers.map(column => (
-                                            // Apply the header cell props
-                                            <TableCell {...column.getHeaderProps()}>
-                                                {// Render the header
-                                                    column.render('Header')}
-                                            </TableCell>
-                                        ))}
-                                </TableRow>
-                            ))}
-                    </TableHead>
-                    {/* Apply the table body props */}
-                    <TableBody {...getTableBodyProps()}>
-                        {// Loop over the table rows
-                            rows.map((row, i) => {
-                                // Prepare the row for display
-                                prepareRow(row)
-                                return (
-                                    // Apply the row props
-                                    <TableRow {...row.getRowProps()} className="tablecell">
-                                        {// Loop over the rows cells
-                                            row.cells.map(cell => {
-                                                // Apply the cell props
-                                                if (cell.column.Header === "View") {
-                                                    return (
-                                                        <TableCell padding="checkbox">
-
-                                                            <Checkbox
-                                                                id={"vc-" + row.original.id}
-                                                                checked={cell.value}
-                                                                onChange={updateVisibility}
-                                                                // inputProps={{ 'aria-labelledby': labelId }}
-                                                            />
-                                                        </TableCell>
-
-                                                    )
-                                                } else {
-                                                    return (
-                                                        <TableCell {...cell.getCellProps()}>
-
-                                                            {cell.render('Cell')}
-
-                                                        </TableCell>
-                                                    )
-                                                }
-                                            })}
+                <TableContainer className={classes.table} >
+                    <MaUTable  {...getTableProps()}  stickyHeader>
+                        <TableHead className={classes.headers} >
+                            {// Loop over the header rows
+                                headerGroups.map(headerGroup => (
+                                    // Apply the header row props
+                                    <TableRow {...headerGroup.getHeaderGroupProps()}>
+                                        {// Loop over the headers in each row
+                                            headerGroup.headers.map(column => (
+                                                // Apply the header cell props
+                                                <TableCell {...column.getHeaderProps()}>
+                                                    {// Render the header
+                                                        column.render('Header')}
+                                                </TableCell>
+                                            ))}
                                     </TableRow>
-                                )
-                            })}
-                    </TableBody>
-                </MaUTable>
+                                ))}
+                        </TableHead>
+                        {/* Apply the table body props */}
+                        <TableBody {...getTableBodyProps()}>
+                            {// Loop over the table rows
+                                rows.map((row, i) => {
+                                    // Prepare the row for display
+                                    prepareRow(row)
+                                    return (
+                                        // Apply the row props
+                                        <TableRow {...row.getRowProps()} className="tablecell">
+                                            {// Loop over the rows cells
+                                                row.cells.map(cell => {
+                                                    // Apply the cell props
+                                                    if (cell.column.Header === "View") {
+                                                        return (
+                                                            <TableCell padding="checkbox">
+
+                                                                <Checkbox
+                                                                    id={"vc-" + row.original.id}
+                                                                    checked={cell.value}
+                                                                    onChange={updateVisibility}
+                                                                    // inputProps={{ 'aria-labelledby': labelId }}
+                                                                />
+                                                            </TableCell>
+
+                                                        )
+                                                    } else {
+                                                        return (
+                                                            <TableCell {...cell.getCellProps()}>
+
+                                                                {cell.render('Cell')}
+
+                                                            </TableCell>
+                                                        )
+                                                    }
+                                                })}
+                                        </TableRow>
+                                    )
+                                })}
+                        </TableBody>
+                    </MaUTable>
                 </TableContainer>
             </ThemeProvider>
         </div>
