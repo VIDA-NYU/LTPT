@@ -104,8 +104,8 @@ def load_meta():
         # file_id = doc['filepath'].split("/")[-1][:-4]
         # file_id = file_id[:-1] + "_" +file_id[-1]
         file_id = str(doc['_id'])
-        if doc['predicted_view'] != "Batter":
-            continue
+        # if doc['predicted_view'] != "Batter":
+        #     continue
         obj = {
             "file_id": str(doc['_id']),
             "view": doc['view'],
@@ -126,6 +126,10 @@ def load_meta():
             "$in": pose_ids
         }
     }))
+    pose_index = {}
+    for pose_doc in pose_docs:
+        pose_index[str(pose_doc['_id'])] = pose_doc
+
     print("pose fetched")
 
     action_docs = list(db['actions'].find({
@@ -150,35 +154,43 @@ def load_meta():
     for i, action_doc in enumerate(action_docs):
         actions = extract_action_data(action_doc)
         for action in actions:
-            # print(action_doc)
-            if action['view'] != "B":
-                continue
+            pose_doc = pose_index[action['pose_id']]
             file_doc = data[action['file_id']]
             # if file_doc['game'] not in valid_games:
             #     continue
-            if "frame" in file_doc:
+            if "frame" in pose_doc:
                 count += 1
-            file_doc['frame'] = action['frame']
-            file_doc['action'] = action['action']
+                continue
+            # print(action['frame'])
+            pose_doc['frame'] = action['frame']
+            pose_doc['action'] = action['action']
             # print(len(file_doc['pose_data']))
             # print(file_doc['frame'])
             # file_doc['pose_frame_data'] = file_doc['pose_data'][file_doc['frame']]
             # print(file_doc)
     print("duplicated records:", count)
     filtered_data = {}
-    for i, pos_doc in enumerate(pose_docs):
-        pose_data = extract_pose_data(pos_doc)
+    for i, pose_doc in enumerate(pose_docs):
+    # for pose_id in pose_index:
+    #     pos_doc = pose_index[pose_id]
+        pose_data = extract_pose_data(pose_doc)
         # file_doc = data[files_with_pose[i]]
-        file_doc = data[str(pos_doc['video_id'])]
+        file_doc = data[str(pose_doc['video_id'])]
         # print(pos_doc['filepath'])
-        if "frame" in file_doc:
+        if "frame" in pose_doc:
             # print(file_doc['frame'])
             # print(len(pose_data[0][0]))
             # print(len(pose_data[0][1]))
-            file_doc['pose_data'] = list(map( lambda x: list(map(lambda y: y[file_doc['frame']], x)), pose_data))
+            # print(pose_doc['_id'])
+            # print(file_doc)
+            # print(pose_doc['frame'])
+            if pose_doc['frame'] >= len(pose_data[0][0]):
+                continue
+            file_doc['pose_data'] = list(map( lambda x: list(map(lambda y: y[pose_doc['frame']], x)), pose_data))
             # filtered_data[file_doc['file_id']] = file_doc
             file_id = "video-" + str(file_count)
             file_doc["file_id"] = file_id
+            file_doc['action'] = pose_doc['action']
             file_count += 1
             filtered_data[file_id] = file_doc
         else:
@@ -196,6 +208,7 @@ def extract_action_data(action_doc):
         # file_id = action_doc['play'] + "_" + action_data['view']
         data = {
             "file_id": str(action_data['video_id']),
+            "pose_id": str(action_data['pose_id']),
             "frame": frame,
             "view": action_data['view'],
             "action": action_name
@@ -303,7 +316,7 @@ if __name__ == '__main__':
     # process_csv()
     # save_remote_db_to_local()
     data = load_meta()
-    with open("metabs.json", "w") as fp:
+    with open("meta.json", "w") as fp:
         json.dump(data, fp)
     # load_meta()
 # meta_data = load_meta_by_json()
