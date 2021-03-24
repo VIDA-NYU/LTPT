@@ -86,9 +86,18 @@ def load_meta_by_json():
     with open("meta.json", "r") as fp:
         meta_data = json.load(fp)
         return meta_data
+
+def load_meta_from_mongo():
+    client = MongoClient("mongodb+srv://guande:guandemongo@ltpt.qsvio.mongodb.net")
+    data = _load_meta(client)
+    return data
+
 def load_meta():
     # client = MongoClient("mongodb+srv://guande:guandemongo@ltpt.qsvio.mongodb.net")
     client = MongoClient()
+    return _load_meta(client)
+
+def _load_meta(client):
 
     print("db connected")
     db = client.ltpt
