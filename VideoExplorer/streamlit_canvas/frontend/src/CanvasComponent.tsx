@@ -311,8 +311,11 @@ function CanvasComponent({args}: ComponentProps) {
         flexGrow: 2,
         flexBasis: "auto",
         marginRight: "30px",
-        paddingLeft: "2px",
-        paddingRight: "2px"
+        background: "#FEFEFE",
+        paddingTop: "0px"
+
+        // paddingLeft: "2px",
+        // paddingRight: "2px"
         // paddingTop: "20px"
         // paddingRight:
         // marginLeft: "30px"
@@ -321,7 +324,7 @@ function CanvasComponent({args}: ComponentProps) {
     const canvasContainerStyles: CSS.Properties = {
         width: width + "px",
         height: "400px",
-        background: "#edf0ef",
+        background: "#fefefe",
         // width: canvasWidth.toString() + "px",
         // height: canvasHeight.toString() + "px",
 
@@ -346,10 +349,16 @@ function CanvasComponent({args}: ComponentProps) {
         flexDirection: "column"
     }
     const useStyles = makeStyles({
+        titleContainer : {
+            background: "#F1F1F1",
+            paddingTop: "10px",
+            paddingLeft: "15px",
+            paddingBottom: "5px"
+        },
         title: {
-            marginLeft: "15px",
-            marginTop: "10px",
-            marginBottom: "5px",
+            // marginLeft: "15px",
+            // marginTop: "10px",
+            // marginBottom: "5px",
 
             // fontSize: 14,
         },
@@ -358,6 +367,9 @@ function CanvasComponent({args}: ComponentProps) {
             top: "0px",
             left: "0px",
 
+        },
+        tableContent: {
+            background: "white"
         }
 
     });
@@ -366,9 +378,12 @@ function CanvasComponent({args}: ComponentProps) {
     return (
         <div ref={div} style={containerStyles}>
             <Paper style={metricDefinitionPanelStyle}>
-                <Typography className={classes.title} variant="h5" component="h2">
-                    Metric Definition
-                </Typography>
+                <div className={classes.titleContainer}>
+                    <Typography className={classes.title} variant="h5" component="h2">
+                        Metric Definition
+                    </Typography>
+                </div>
+
 
                 <div style={canvasContainerStyles}>
                     <div className={classes.canvasWrapper}>
@@ -415,9 +430,11 @@ function CanvasComponent({args}: ComponentProps) {
             </Paper>
 
             <Card style={tableStyles}>
-                <Typography className={classes.title} variant="h5" component="h4">
-                    Metric Table
-                </Typography>
+                <div className={classes.titleContainer}>
+                    <Typography className={classes.title} variant="h5" component="h4">
+                        Metric Table
+                    </Typography>
+                </div>
 
                 <MetricTable metrics={metrics} setData={updateMetricStatus}></MetricTable>
             </Card>

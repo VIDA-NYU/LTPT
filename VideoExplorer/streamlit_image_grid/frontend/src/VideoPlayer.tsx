@@ -1,5 +1,6 @@
 import React, {CSSProperties, useRef} from "react";
 import ReactPlayer from 'react-player/file'
+import Card from '@material-ui/core/Card'
 // import  from '@material-ui/icons/Close';
 import {Close} from "@material-ui/icons";
 import {describeColumns, describeImage} from "./utils";
@@ -40,7 +41,11 @@ function VideoPlayer({url, onClose}: VideoPlayerPros) {
         height: "400px",
         border: "steelblue",
         background: "#fafafa",
-        display: "block"
+        display: "block",
+        marginLeft: "18px",
+        marginTop: "10px",
+        marginRight: "1px",
+        marginBottom: "10px"
     }
     let closeStyle: CSSProperties = {
 
@@ -49,7 +54,7 @@ function VideoPlayer({url, onClose}: VideoPlayerPros) {
         onClose();
     }
     return (
-        <div style={containerStyle}>
+        <Card style={containerStyle}>
             <ReactPlayer
                 style={playerStyles}
                 width={"100%"}
@@ -71,7 +76,7 @@ function VideoPlayer({url, onClose}: VideoPlayerPros) {
                         className={classes.icon}>
                 <CloseIcon onClick={()=>onClickClose()} />
             </IconButton>
-        </div>
+        </Card>
     )
 }
 

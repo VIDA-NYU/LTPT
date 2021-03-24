@@ -1,0 +1,28 @@
+#expanderArrow {
+    position: relative;
+    background: #88b7d5;
+    /*border: 4px solid #c2e1f5;*/
+}
+#expanderArrow:after, #expanderArrow:before {
+    bottom: 100%;
+    left: 50%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+#expanderArrow:after {
+    border-color: rgba(136, 183, 213, 0);
+    border-bottom-color: #f1f1f1;
+    border-width: 11px;
+    margin-left: -30px;
+}
+#expanderArrow:before {
+    border-color: rgba(194, 225, 245, 0);
+    border-bottom-color: #f1f1f1;
+    border-width: 18px;
+    margin-left: -36px;
+}
