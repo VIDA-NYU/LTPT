@@ -6,3 +6,4 @@ all_images/
 all_masks/
 selected_images/
 selected_masks/
+__pycache__/
