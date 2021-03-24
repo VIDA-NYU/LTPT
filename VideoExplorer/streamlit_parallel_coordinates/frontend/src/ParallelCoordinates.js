@@ -5,6 +5,7 @@ import {axisLeft} from "d3";
 import "./ParallelCoordinates.css"
 import {renderQueue} from "./utils";
 import Typography from "@material-ui/core/Typography";
+import Card from "@material-ui/core/Card";
 // import {} from "d3"
 function hashColumns(cols){
     return cols.map(c=>c.key).join();
@@ -297,7 +298,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     }
     let containerStyle = {
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        marginRight: "40px"
     }
 
     let headerStyle = {
@@ -309,11 +311,17 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
         // fontSize: 14,
     };
 
+    let headerContainerStyle = {
+        background: "#F1F1F1"
+    }
     return (
-        <div style={containerStyle}>
-            <Typography style={headerStyle} variant="h5" component="h4">
-                Parallel Coordinates
-            </Typography>
+        <Card style={containerStyle}>
+            <div style={headerContainerStyle} >
+                <Typography style={headerStyle} variant="h5" component="h4">
+                    Parallel Coordinates
+                </Typography>
+            </div>
+
             <div className={"parcoords"} width={width + margin.left + margin.right}
                  style = {visWrapperStyle}
                  height={height + margin.top + margin.bottom}   >
@@ -329,7 +337,7 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
 
                 </svg>
             </div>
-        </div>
+        </Card>
 
     )
 }

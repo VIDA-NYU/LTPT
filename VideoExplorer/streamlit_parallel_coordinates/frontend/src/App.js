@@ -41,17 +41,17 @@ function App({args}) {
     }, []);
     let barColumn = columnFocus?columns.filter( d=>d.key ===columnFocus)[0]:columns[0]
     return (
-        <Paper className="App" width={compRect.width + "px"} height={compRect.height + "px"} style={containerStyle}>
+        <div className="App" width={compRect.width + "px"} height={compRect.height + "px"} style={containerStyle}>
 
                 <ParallelCoordinates className="parcoords-container" data={data} dimensions={columns}
                                      setColumnFocus={setColumnFocus} onSetImageFilter={onSetImageFilter}
-                                     highlightImage={highlightImage} height={compRect.height} width={compRect.width - compRect.height}
+                                     highlightImage={highlightImage} height={compRect.height} width={compRect.width - 1.2 * compRect.height}
                                      columnDescriptions={descriptions}
                 >
                 </ParallelCoordinates>
                 <BarDistribution className="distribution" data={data} column={barColumn}
                                   imageFilter={imageFilter} columnFilters={columnFilters}
-                                 width={compRect.height} height={compRect.height}
+                                 width={compRect.height * 1.2} height={compRect.height}
                                  columnDescription={descriptions.filter(d=>d.key === barColumn.key)[0]}
                 >
 
@@ -59,7 +59,7 @@ function App({args}) {
                 {/*<Button onClick={()=>{*/}
                 {/*    setHighlightImage("1");*/}
                 {/*}}>HELLO</Button>*/}
-        </Paper>
+        </div>
     );
 }
 

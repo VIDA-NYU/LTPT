@@ -37,14 +37,14 @@ enum SortingWay {
 
 function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataMap}: ImageGridProps) {
     let possibleViews = ['A', 'B', 'C', 'D'];
-    let height = 800;
+    let height = 680;
     let width = 960;
     let columnNumber = 3;
     let spacing = 80;
     let gridImageWidth = (width - (columnNumber - 1) * spacing) / columnNumber;
     let gridImageHeight = gridImageWidth * 54 / 96;
     if (videoShowing) {
-        height = 450
+        height = 330
     }
     let expanderWidth = Math.round(width - spacing*(columnNumber-2) )
     const [expandingImage, setExpandingImage] = useState<ImageConfig>();

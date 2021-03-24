@@ -5,6 +5,7 @@ import {axisLeft} from "d3";
 import {VegaLite, Vega} from "react-vega";
 import {describeColumn} from "./utils";
 import Typography  from "@material-ui/core/Typography";
+import Card from '@material-ui/core/Card'
 export default function BarDistribution({data, column, imageFilter, columnFilters, columnDescription, width, height}){
     let table = {
         table: data
@@ -30,9 +31,9 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
     }, []);
 
     let padding = {
-        top: 1,
+        top: 25,
         bottom: 5,
-        right: 53,
+        right: 15,
         left: 5
     }
     let containerStyle = {
@@ -40,7 +41,10 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
         flexDirection: "column",
         alignItems: "flex-start",
 
-        borderLeft: "1px solid grey"
+    }
+    let headerContainerStyle = {
+        background: "#F1F1F1",
+        width: "100%"
     }
     let visContainerStyle = {
         // paddingTop: padding.top,
@@ -149,15 +153,18 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
     }
 
     return (
-        <div style={containerStyle}>
-            <Typography style={headerStyle} variant="h5" component="h4">
-                { columnDescription.desc}
-            </Typography>
+        <Card style={containerStyle}>
+            <div style={headerContainerStyle}>
+                <Typography style={headerStyle} variant="h5" component="h4">
+                    { columnDescription.desc}
+                </Typography>
+            </div>
+
             <div style={visContainerStyle}>
 
                 <Vega spec={spec} data={table} renderer={"svg"}/>
             </div>
-        </div>
+        </Card>
 
     )
 
