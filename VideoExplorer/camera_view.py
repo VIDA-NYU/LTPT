@@ -18,6 +18,10 @@ camera_views = video_df["true_camera_view"].unique()
 actions = list(filter(lambda x: x != "Not Detected", video_df['action'].unique()))
 # camera_views = camera_views[1:3]
 st.set_page_config(layout="wide", page_title="Stance")
+# a = video_df[video_df['view']=='B']
+# c = video_df[video_df['view']=='C']
+# st.write(a)
+# st.write(c)
 # st.markdown(
 #     """
 #     <style>

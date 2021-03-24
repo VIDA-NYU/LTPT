@@ -99,16 +99,20 @@ def load_meta():
     count = 0
     videos = list(db['videos'].find({}))
     print("videos fetched")
+    file_count = 0
     for doc in videos:
         # file_id = doc['filepath'].split("/")[-1][:-4]
         # file_id = file_id[:-1] + "_" +file_id[-1]
         file_id = str(doc['_id'])
+        if doc['predicted_view'] != "Batter":
+            continue
         obj = {
             "file_id": str(doc['_id']),
             "view": doc['view'],
             "play": doc['play'],
             "game": doc['game'],
-            "col": doc['col']
+            "col": doc['col'],
+            "predicted_view": doc['predicted_view']
         }
         data[file_id] = obj
         if "poses" in doc:
@@ -127,7 +131,7 @@ def load_meta():
     action_docs = list(db['actions'].find({
         "$or": [
             {
-                "actions.release.video_id": {
+                "actions.swing.video_id": {
                     "$in": selected_video_ids
                 }
             },
@@ -141,14 +145,17 @@ def load_meta():
     }))
     print("actions fetched")
     count = 0
-    valid_games = ["181101_AFL-PEORIA_AFL-SCOTTSDALE__0"]
+    print(len(action_docs))
+    # valid_games = ["181101_AFL-PEORIA_AFL-SCOTTSDALE__0"]
     for i, action_doc in enumerate(action_docs):
         actions = extract_action_data(action_doc)
         for action in actions:
-
-            file_doc = data[action['file_id']]
-            if file_doc['game'] not in valid_games:
+            # print(action_doc)
+            if action['view'] != "B":
                 continue
+            file_doc = data[action['file_id']]
+            # if file_doc['game'] not in valid_games:
+            #     continue
             if "frame" in file_doc:
                 count += 1
             file_doc['frame'] = action['frame']
@@ -163,13 +170,21 @@ def load_meta():
         pose_data = extract_pose_data(pos_doc)
         # file_doc = data[files_with_pose[i]]
         file_doc = data[str(pos_doc['video_id'])]
-        print(pos_doc['filepath'])
+        # print(pos_doc['filepath'])
         if "frame" in file_doc:
             # print(file_doc['frame'])
             # print(len(pose_data[0][0]))
             # print(len(pose_data[0][1]))
             file_doc['pose_data'] = list(map( lambda x: list(map(lambda y: y[file_doc['frame']], x)), pose_data))
-            filtered_data[file_doc['file_id']] = file_doc
+            # filtered_data[file_doc['file_id']] = file_doc
+            file_id = "video-" + str(file_count)
+            file_doc["file_id"] = file_id
+            file_count += 1
+            filtered_data[file_id] = file_doc
+        else:
+            pass
+            # print(file_doc['view'])
+            # print("fu")
     client.close()
     return filtered_data
 
@@ -182,6 +197,7 @@ def extract_action_data(action_doc):
         data = {
             "file_id": str(action_data['video_id']),
             "frame": frame,
+            "view": action_data['view'],
             "action": action_name
         }
         result.append(data)
@@ -228,7 +244,8 @@ def generate_df_by_meta(meta_data):
         games.append(game)
         plays.append(play)
         cols.append(col)
-        true_camera_views.append(view_names[view])
+        predicted_view = doc['predicted_view']
+        true_camera_views.append(predicted_view)
     data = {
         "file": file_ids,
         "true_camera_view": true_camera_views,
@@ -286,7 +303,7 @@ if __name__ == '__main__':
     # process_csv()
     # save_remote_db_to_local()
     data = load_meta()
-    with open("meta_.json", "w") as fp:
+    with open("metabs.json", "w") as fp:
         json.dump(data, fp)
     # load_meta()
 # meta_data = load_meta_by_json()

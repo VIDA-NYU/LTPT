@@ -107,6 +107,8 @@ def calculate_metrics(metric_def, video_df, meta_data):
         meta = meta_data[file_id]
         if "pose_data" in meta:
             metric_value = f(meta['pose_data'])
+            if np.isnan(metric_value):
+                metric_value = 0
             values.append([file_id, metric_value])
     values = pd.DataFrame(values)
     values.columns = ['file', "x"]
