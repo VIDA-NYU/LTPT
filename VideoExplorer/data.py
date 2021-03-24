@@ -140,8 +140,8 @@ def _load_meta(client):
     })
     print("pose fetched")
     pose_index = {}
-    for i, pose_doc in enumerate(pose_docs):
-        pose_index[str(pose_doc['_id'])] = i
+    # for i, pose_doc in enumerate(pose_docs):
+    #     pose_index[str(pose_doc['_id'])] = i
 
 
     action_docs = list(db['actions'].find({
@@ -198,7 +198,7 @@ def _load_meta(client):
         # file_doc = data[files_with_pose[i]]
         file_doc = data[str(pose_doc['video_id'])]
         # print(pos_doc['filepath'])
-        if "frame" in pose_doc:
+        if str(pose_doc['_id']) in pose_info:
             # print(file_doc['frame'])
             # print(len(pose_data[0][0]))
             # print(len(pose_data[0][1]))
@@ -224,6 +224,7 @@ def _load_meta(client):
             # print("fu")
         i += 1
     client.close()
+    print("processed")
     return filtered_data
 
 def extract_action_data(action_doc):
