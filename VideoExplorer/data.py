@@ -136,8 +136,8 @@ def _load_meta(client):
         }
     }))
     pose_index = {}
-    for pose_doc in pose_docs:
-        pose_index[str(pose_doc['_id'])] = pose_doc
+    for i, pose_doc in enumerate(pose_docs):
+        pose_index[str(pose_doc['_id'])] = i
 
     print("pose fetched")
 
@@ -163,7 +163,7 @@ def _load_meta(client):
     for i, action_doc in enumerate(action_docs):
         actions = extract_action_data(action_doc)
         for action in actions:
-            pose_doc = pose_index[action['pose_id']]
+            pose_doc = pose_docs[pose_index[action['pose_id']]]
             file_doc = data[action['file_id']]
             # if file_doc['game'] not in valid_games:
             #     continue
