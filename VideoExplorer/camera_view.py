@@ -57,7 +57,7 @@ for file_id in meta_data:
     meta = meta_data[file_id]
     if "pose_data" in meta:
         valid_files.append(file_id)
-valid_files = list(map(lambda x: x + ".jpg", valid_files))
+valid_files = list(map(lambda x: x, valid_files))
 video_df = video_df[video_df['file'].isin(valid_files)]
 
 ##############
@@ -104,7 +104,6 @@ def main():
     filtered = []
     use_metric_filter = False
 
-
     filtered_df = video_df[video_df["true_camera_view"] == true_camera_view]
     filtered_df = filtered_df[filtered_df['action'] == true_action]
     if correct_pred_option == "Correct":
@@ -135,7 +134,7 @@ def main():
                     json_df.append(dict(row[1]))
                 parcoords_result = st_parcoords(data=json_df, columns=columns)
                 if parcoords_result and "filtered" in parcoords_result:
-                    filtered_images = list(map(lambda x: x + ".jpg", parcoords_result['filtered']))
+                    filtered_images = list(map(lambda x: x, parcoords_result['filtered']))
                     # st.write(filtered_images)
                     filtered_df = filtered_df[filtered_df['file'].isin(filtered_images)]
                     use_metric_filter = False
@@ -160,7 +159,7 @@ def main():
     image_json = []
     for row in filtered_df.iterrows():
         obj = {
-            "file_id": row[1]['play'] + "_" + row[1]['view'],
+            "file_id": row[1]['file'],
             "col": row[1]['col'],
             "game": row[1]['game'],
             "play": row[1]['play'],

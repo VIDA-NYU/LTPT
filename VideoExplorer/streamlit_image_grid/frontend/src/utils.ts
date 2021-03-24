@@ -21,6 +21,14 @@ function getVideoUrl(imageConfig: ImageConfig | undefined){
     let raw = `https://storage.googleapis.com/ltpt-videos/${imageConfig.col}/${imageConfig.game}/${imageConfig.play+imageConfig.view}.mp4`
     return raw.replace(" ", "%20")
 }
+function getImageUrl(imageConfig: ImageConfig | undefined){
+    if(!imageConfig){
+        return ""
+    }
+    let convertedGame = imageConfig.game.replace("/", " ");
+    let raw = `https://storage.googleapis.com/ltpt-videos/video-images/${imageConfig.col}-${convertedGame}-${imageConfig.play}-${imageConfig.view}.png`
+    return raw.replace(" ", "%20");
+}
 interface Column {
     name: string,
     key: string,
@@ -59,6 +67,6 @@ function describeColumns(columns: Array<Column>){
     }, new Map())
     return {descriptionMap};
 }
-export {describeImage, getVideoUrl, describeColumns}
+export {describeImage, getVideoUrl, getImageUrl, describeColumns}
 export type { ImageConfig, Column, ImageData }
 

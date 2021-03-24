@@ -103,7 +103,7 @@ def calculate_metrics(metric_def, video_df, meta_data):
     f = build_metric_func(metric_def)
     values = []
     for row in video_df.iterrows():
-        file_id = row[1]['file'][:-4]
+        file_id = row[1]['file']
         meta = meta_data[file_id]
         if "pose_data" in meta:
             metric_value = f(meta['pose_data'])

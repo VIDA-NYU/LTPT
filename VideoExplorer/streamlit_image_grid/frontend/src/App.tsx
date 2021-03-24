@@ -38,6 +38,7 @@ function App({args} : ComponentProps) {
         imageDataMap.set(imageData.file, imageData);
     }
     let imageConfigs = args.images;
+    console.log(imageConfigs)
     // for (let i = 0; i < 10; i++) {
     //     imageConfigs.push({
     //         "file_id": "3367_C",

@@ -10,7 +10,7 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import IconButton from '@material-ui/core/IconButton';
 import PlayerIcon from '@material-ui/icons/PlayCircleOutline';
 import FormControl from '@material-ui/core/FormControl'
-import {ImageConfig, ImageData, Column, describeImage, describeColumns} from "./utils";
+import {ImageConfig, ImageData, Column, describeImage, describeColumns, getImageUrl} from "./utils";
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -48,6 +48,7 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
     }
     let expanderWidth = Math.round(width - spacing*(columnNumber-2) )
     const [expandingImage, setExpandingImage] = useState<ImageConfig>();
+    const [useDemoData, setUseDemoData] = useState<boolean>(false);
     const useStyles = makeStyles((theme: Theme) =>
         createStyles({
             root: {
@@ -264,10 +265,14 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                 return <ExpanderIcon onClick={() => onClickExpander(image)}/>
             }
         }
+        let imageUrl = getImageUrl(tile);
+        if(useDemoData){
+            imageUrl = `/video_images/${tile.play}_${tile.view}.jpg`;
+        }
         return (
             <div className={classes.gridImageContainer}>
             <div className={classes.gridImageItem}>
-                <img width={gridImageWidth + "px"} src={"/video_images/" + tile.file_id + ".jpg"} alt={""}/>
+                <img width={gridImageWidth + "px"} height={gridImageHeight+"px"} src={imageUrl} alt={""}/>
                 <div className={classes.gridImageBar}>
                     <div></div>
                     <div className={classes.gridImageText}>
@@ -420,6 +425,17 @@ function ImageGrid({onClickPlay, imageConfigs, videoShowing, columns, imageDataM
                                       />
                                   }
                                   label="Low"
+                />
+                <FormControlLabel className={classes.headerItem}
+                                  control={
+                                      <Switch
+                                          checked={useDemoData}
+                                          onChange={() => {setUseDemoData(!useDemoData)}}
+                                          name="demoData"
+                                          color="primary"
+                                      />
+                                  }
+                                  label="Demo Data"
                 />
             </div>
             <div className={classes.gridContainer}>

@@ -75,8 +75,9 @@ def save_remote_db_to_local():
     local_client = MongoClient()
     db = client.ltpt
     local_db = local_client.ltpt
-    collection_names = [ 'poses', 'actions']
+    collection_names = ['videos', 'poses', 'actions']
     for collection_name in collection_names:
+        local_db[collection_name].remove({})
         collection = db[collection_name].find({})
         local_db[collection_name].insert_many(collection)
         print("saved:", collection_name)
@@ -99,15 +100,15 @@ def load_meta():
     videos = list(db['videos'].find({}))
     print("videos fetched")
     for doc in videos:
-        file_id = doc['filepath'].split("/")[-1][:-4]
-        file_id = file_id[:-1] + "_" +file_id[-1]
+        # file_id = doc['filepath'].split("/")[-1][:-4]
+        # file_id = file_id[:-1] + "_" +file_id[-1]
+        file_id = str(doc['_id'])
         obj = {
-            "file_id": file_id,
+            "file_id": str(doc['_id']),
             "view": doc['view'],
             "play": doc['play'],
             "game": doc['game'],
             "col": doc['col']
-
         }
         data[file_id] = obj
         if "poses" in doc:
@@ -139,21 +140,34 @@ def load_meta():
 
     }))
     print("actions fetched")
+    count = 0
+    valid_games = ["181101_AFL-PEORIA_AFL-SCOTTSDALE__0"]
     for i, action_doc in enumerate(action_docs):
         actions = extract_action_data(action_doc)
         for action in actions:
+
             file_doc = data[action['file_id']]
+            if file_doc['game'] not in valid_games:
+                continue
+            if "frame" in file_doc:
+                count += 1
             file_doc['frame'] = action['frame']
             file_doc['action'] = action['action']
             # print(len(file_doc['pose_data']))
             # print(file_doc['frame'])
             # file_doc['pose_frame_data'] = file_doc['pose_data'][file_doc['frame']]
             # print(file_doc)
+    print("duplicated records:", count)
     filtered_data = {}
     for i, pos_doc in enumerate(pose_docs):
         pose_data = extract_pose_data(pos_doc)
-        file_doc = data[files_with_pose[i]]
+        # file_doc = data[files_with_pose[i]]
+        file_doc = data[str(pos_doc['video_id'])]
+        print(pos_doc['filepath'])
         if "frame" in file_doc:
+            # print(file_doc['frame'])
+            # print(len(pose_data[0][0]))
+            # print(len(pose_data[0][1]))
             file_doc['pose_data'] = list(map( lambda x: list(map(lambda y: y[file_doc['frame']], x)), pose_data))
             filtered_data[file_doc['file_id']] = file_doc
     client.close()
@@ -164,9 +178,9 @@ def extract_action_data(action_doc):
     for action_name in action_doc['actions']:
         action_data = action_doc['actions'][action_name]
         frame = action_data['frame']
-        file_id = action_doc['play'] + "_" + action_data['view']
+        # file_id = action_doc['play'] + "_" + action_data['view']
         data = {
-            "file_id": file_id,
+            "file_id": str(action_data['video_id']),
             "frame": frame,
             "action": action_name
         }
@@ -186,16 +200,65 @@ def extract_pose_data(pose_doc):
         pose_data.append(kp_data)
     return pose_data
 
+def generate_df_by_meta(meta_data):
+    views = []
+    plays = []
+    games = []
+    cols = []
+    file_ids = []
+
+    values = []
+    true_camera_views = []
+    view_names = {
+        "A": "Behind Pitcher",
+        "B": "Batter, 3B side",
+        "C": "Pitcher, 3B side",
+        "D": "Behind Home"
+    }
+    for file_id in meta_data:
+        doc = meta_data[file_id]
+        value = meta_data[file_id]['action'][0].upper() + meta_data[file_id]['action'][1:]
+        view = meta_data[file_id]['view']
+        game = meta_data[file_id]['game']
+        play = doc['play']
+        col = doc['col']
+        file_ids.append(file_id)
+        values.append(value)
+        views.append(view)
+        games.append(game)
+        plays.append(play)
+        cols.append(col)
+        true_camera_views.append(view_names[view])
+    data = {
+        "file": file_ids,
+        "true_camera_view": true_camera_views,
+        "pred_camera_view": true_camera_views,
+        "col": cols,
+        "game": games,
+        "play": plays,
+        "view": views,
+        "action": values
+    }
+    df = pd.DataFrame(data=data)
+    # df = pd.DataFrame([file_ids, cols, games, plays, views])
+    return df
+
 def process_df(oldcsv, meta_data):
     values = []
     valid_files = list(meta_data.keys())
     valid_files = list(map(lambda x: x+".jpg", valid_files))
     oldcsv = oldcsv[oldcsv['file'].isin(valid_files)]
-
+    view_names = {
+        "A": "Behind Pitcher",
+        "B": "Batter, 3B side",
+        "C": "Pitcher, 3B side",
+        "D": "Behind Home"
+    }
     views = []
     plays = []
     games = []
     cols = []
+    true_camera_views = []
     for row in oldcsv.iterrows():
         file_id = row[1]['file'][:-4]
         if file_id in meta_data:
@@ -210,6 +273,7 @@ def process_df(oldcsv, meta_data):
             games.append(game)
             plays.append(play)
             cols.append(col)
+            true_camera_views.append(view_names[view])
         else:
             value = "Not Detected"
     oldcsv['action'] = values
@@ -222,7 +286,7 @@ if __name__ == '__main__':
     # process_csv()
     # save_remote_db_to_local()
     data = load_meta()
-    with open("meta.json", "w") as fp:
+    with open("meta_.json", "w") as fp:
         json.dump(data, fp)
-    load_meta()
+    # load_meta()
 # meta_data = load_meta_by_json()

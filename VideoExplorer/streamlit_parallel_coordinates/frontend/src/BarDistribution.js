@@ -5,12 +5,20 @@ import {axisLeft} from "d3";
 import {VegaLite, Vega} from "react-vega";
 import {describeColumn} from "./utils";
 import Typography  from "@material-ui/core/Typography";
-import Card from '@material-ui/core/Card'
+import Card from '@material-ui/core/Card';
+import Slider from '@material-ui/core/Slider';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+function valuetext(value) {
+    return `${value}`;
+}
+
 export default function BarDistribution({data, column, imageFilter, columnFilters, columnDescription, width, height}){
     let table = {
         table: data
     }
-
+    const [binSize, setBinSize] = useState(5);
+    const [autoScale, setAutoScale] = useState(false);
     useEffect(() => {
         let resizeTimer;
         const handleResize = () => {
@@ -32,7 +40,7 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
 
     let padding = {
         top: 25,
-        bottom: 5,
+        bottom: 8,
         right: 15,
         left: 5
     }
@@ -52,6 +60,29 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
         paddingBottom: padding.bottom + "px",
         paddingRight: padding.right + "px",
         paddingLeft: padding.left + "px",
+        display: "flex",
+        flexDirection: "column"
+    }
+    let controlPanelStyle = {
+        display: "flex",
+        flexDirection: "row",
+        marginLeft: "50px",
+        justifyContent: "space-evenly",
+        marginBottom: "5px"
+    }
+    let controlSwitchStyle = {
+
+    }
+    let controlSliderStyle = {
+        width: "90px"
+    };
+    let switchStyle = {
+        display: "flex",
+        flexDirection: "column"
+    }
+    let sliderContainerStyle = {
+        display: "flex",
+        flexDirection: "column"
     }
     let headerStyle = {
         paddingLeft: "15px",
@@ -114,6 +145,20 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
 
     },[columnFilters, columnName])
 
+    let getXEncoding = (useAuto) => {
+        if(!useAuto){
+            return {
+                "field": columnName, "bin": {step: binSize}, scale: {
+                    domain
+                }
+            }
+        }else{
+            return {
+                "field": columnName, "bin": {step: binSize}
+            }
+        }
+    }
+    let xEncoding = getXEncoding(autoScale);
 
     let columnDesc = describeColumn(column);
     let spec = {
@@ -123,15 +168,21 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
         // title: "Distribution of " + columnDescription.desc,
         "layer": [
         {
-            "params": [{
-                "name": "brush",
-                "select": {"type": "interval", "encodings": ["x"]}
-            }],
+            "params": [
+                // {
+                //     "name": "brush",
+                //     "select": {"type": "interval", "encodings": ["x"]}
+                // },
+                // {
+                //     "name": "binsize",
+                //     value: 15,
+                //     // "select": {"type": "point", "fields": ["Origin"]},
+                //     "bind": {"input": "range", "min": 2, "max": 30}
+                // }
+            ],
             "mark": "bar",
             "encoding": {
-                "x": {"field": columnName, "bin": true, scale:{
-                    domain
-                    }},
+                "x": xEncoding,
                 "y": {"aggregate": "count"}
             }
         },
@@ -140,9 +191,7 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
             "transform": [{"filter": {"field": "file_id", "oneOf": imageFilter}}],
             "mark": "bar",
             "encoding": {
-                "x": {"field": columnName, "bin": true, scale: {
-                    domain
-                    }},
+                "x": xEncoding,
                 "y": {"aggregate": "count"},
                 "color": {"value": "goldenrod"}
             }
@@ -152,6 +201,14 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
 
     }
 
+
+
+    let handleScaleChange = ()=>{
+        setAutoScale(!autoScale);
+    }
+    let handleSliderChange = (e, newvalue) =>{
+        setBinSize(newvalue)
+    }
     return (
         <Card style={containerStyle}>
             <div style={headerContainerStyle}>
@@ -163,6 +220,44 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
             <div style={visContainerStyle}>
 
                 <Vega spec={spec} data={table} renderer={"svg"}/>
+
+            </div>
+            <div style={controlPanelStyle}>
+                {/*<div style={switchStyle}>*/}
+                    <FormControlLabel style={controlSwitchStyle}
+                                      control={
+                                          <Switch
+                                              size={"small"}
+                                              checked={autoScale}
+                                              onChange={() => handleScaleChange()}
+                                              name="auto scale"
+                                              color="primary"
+                                          />
+                                      }
+                                      // label={""}
+                                      label="Auto Scale"
+                    />
+                    {/*<span> Adaptive Scale </span>*/}
+                {/*</div>*/}
+
+
+                <div style={sliderContainerStyle}>
+                    <Slider
+                        style={controlSliderStyle}
+                        value={binSize}
+                        getAriaValueText={valuetext}
+                        aria-labelledby="discrete-slider"
+                        valueLabelDisplay="auto"
+                        onChange={handleSliderChange}
+                        step={1}
+                        marks
+                        min={1}
+                        max={30}
+                    />
+                    <span> Bin Size</span>
+                </div>
+
+
             </div>
         </Card>
 
