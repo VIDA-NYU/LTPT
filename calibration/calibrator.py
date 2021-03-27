@@ -1,8 +1,10 @@
 import cv2
 import time
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from pymongo import MongoClient
 from tensorflow_graphics.geometry.transformation import rotation_matrix_3d
 from tensorflow_addons import image as tfa_image
 
@@ -303,6 +305,7 @@ class Calibrator:
     def calibrate(self, guess, gt, **kw):
         t0 = time.time()
         # cal = self.optimize(guess, gt, vars=self.cam_vars, last=True, epoch=100, rate=0.03, decay=1, **kw)
+        # cal = self.optimize(guess, gt, vars=self.all_vars, last=True, epoch=10, rate=0.02, decay=2, **kw)
         cal = self.optimize(guess, gt, vars=self.all_vars, last=False, epoch=50, rate=0.02, decay=2, **kw)
         cal = self.optimize(guess, gt, vars=self.loc_vars, last=False, epoch=20, rate=0.01, decay=1, **kw)
         cal = self.optimize(guess, gt, vars=self.pos_vars, last=False, epoch=10, rate=0.01, decay=1, **kw)
@@ -343,8 +346,37 @@ def from_gray(gray):
 
 
 def to_opt(img):
-    mapping = np.array([0, 2, 1, 3, 3, 4, 0, 3], dtype=np.uint8)
+    # mapping = np.array([0, 2, 1, 3, 3, 4, 0, 3], dtype=np.uint8) # dirt, grass, lines and separate pitcher mound
+    mapping = np.array([0, 2, 1, 3, 3, 2, 0, 3], dtype=np.uint8)  # dirt, grass and lines
+    # mapping = np.array([0, 2, 0, 3, 3, 2, 0, 3], dtype=np.uint8)  # dirt & lines only
     return mapping[img.ravel()].reshape(img.shape[:2])
+
+
+def peter_to_gray(img, annot=False):
+    # plt.figure("Img")
+    # plt.imshow(img)
+
+    gray = np.zeros(img.shape[:2], dtype=np.uint32)
+    gray[...] = np.sum(img.astype(np.uint32), axis=2, dtype=np.uint32)
+
+    correspondence = np.zeros(255*3+1, dtype=np.uint8)
+
+    if annot:
+        correspondence[255 + 255] = 1
+        correspondence[81 + 81] = 1
+        correspondence[107 + 142 + 35] = 2
+        correspondence[255 + 255 + 255] = 4
+    else:
+        correspondence[128 + 64 + 128] = 1
+        correspondence[70 + 70 + 70] = 2
+
+    gray[...] = correspondence[gray.ravel()].reshape(img.shape[:2])
+
+    # plt.figure("Gray")
+    # plt.imshow(gray)
+    # plt.show()
+
+    return gray
 
 
 def cache_reference(filename, downsample=True, plot=False):
@@ -456,6 +488,48 @@ def test():
     print("\nOptimal calibration:", calib_opt)
 
 
+def generate():
+    db = MongoClient("mongodb+srv://yurii:yuriimongo@ltpt.qsvio.mongodb.net").ltpt
+    videos = list(db["videos"].find({}))
+    print(len(videos), "videos")
+    print(videos[0])
+
+    pitcher_vids = {str(vid["_id"]): {"view": vid["view"], "pitcher_height": vid["pitcher_height"],
+                                      "predicted_side": vid["predicted_side"]} for vid in videos if "pitcher_height" in vid}
+
+    print(len(pitcher_vids), "pitcher videos")
+    print(next(iter(pitcher_vids.items())))
+
+    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
+    ref = load_reference(reference_filename, plot=False)
+
+    selection = "603ffd1071a81c8b9eae02f3"
+    path = "../all_masks/"
+    # path = "../some_segmented/"
+    segmentation_filename = path + selection + "_" + pitcher_vids[selection]["view"] + ".png"
+
+    seg = cv2.imread(segmentation_filename)[:, :, ::-1]
+    gt = to_opt(peter_to_gray(seg, annot=(path == "../all_masks/")))
+
+    mask = gt >= 0  # Ignore. Segmentations are too bad to use masks
+    gt = gt.ravel()[mask.ravel()]
+    tf_gt = tf.convert_to_tensor(value=gt, dtype=tf.float32)
+
+    cal = Calibrator(ref, mask, plot=True)
+
+    if pitcher_vids[selection]["predicted_side"] == "third base":
+        calib_guess = (41, 41, 5, 90 + 35, 1, 100, 6)
+    else:
+        # TODO: Verify with example
+        calib_guess = (41, 41, 5, -35, 1, 100, 6)
+
+    calib_opt = cal.calibrate(calib_guess, tf_gt, plot=True)
+    print("\nOptimal calibration:", calib_opt)
+
+    with open(path + selection + ".json", "w") as f:
+        json.dump(calib_opt, f, indent=4)
+
+
 if __name__ == "__main__":
     # cache_reference("../baseball_field/baseball_field_segmentation_5px_per_in_2", plot=True)
     # ref = load_reference("../baseball_field/baseball_field_segmentation_5px_per_in_2", plot=True)
@@ -463,6 +537,7 @@ if __name__ == "__main__":
     # exit()
 
     # validate()
-    test()
+    # test()
+    generate()
 
     plt.show()
