@@ -1,3 +1,4 @@
+import cv2
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,7 +46,7 @@ class Calibrator:
         self.prep_ref(ref, plot=plot)
         self.prep_rays(mask, plot=plot)
 
-        self.build_scaled_vars(defaults or [0] * 7, scales or [100, 100, 10, 100, 50, 100, 5])
+        self.build_scaled_vars(defaults or [0] * 7, scales or [100, 100, 10, 100, 100, 100, 10])
         self.reset()
 
     def prep_ref(self, ref, ref_dim=(430, 430), ref_origin=(355, 75), plot=False):
@@ -109,17 +110,38 @@ class Calibrator:
         self.all_vars = [tf.Variable([default / scale], dtype=tf.float32) for default, scale in zip(defaults, scales)]
         self.pos_x, self.pos_y, self.pos_z, self.phi, self.theta, self.dist, self.fov = self.all_vars
 
+        self.cam_theta = tf.Variable([0.], dtype=tf.float32)
+        self.s_cam_theta = self.s_theta / 10.
+
         self.loc_vars = [self.pos_x, self.pos_y, self.pos_z, self.phi, self.theta]
         self.pos_vars = [self.pos_x, self.pos_y, self.pos_z]
-        self.rot_vars = [self.phi, self.theta]
-        self.cam_vars = [self.theta, self.dist, self.fov]
+        self.rot_vars = [self.phi, self.theta, self.cam_theta]
+        self.cam_vars = [self.pos_x, self.pos_y, self.pos_z, self.cam_theta, self.dist, self.fov]
 
     def reset(self):
         self.losses, self.configs = [], []
+        self.cam_theta.assign([0.])
 
         for var, default, scale in zip(self.all_vars, self.defaults, self.scales):
             var.assign([default / scale])
         tf.print("Default vars:", self.all_vars)
+
+    def get_dist_adjustment(self, dist, fov):
+        ref_tan_z = tf.tan(fov * self.to_rad / 2.)
+        tan_z = tf.tan((fov + self.fov * self.s_fov) * self.to_rad / 2.)
+
+        dist_adj = dist * (ref_tan_z - tan_z) / tan_z
+        # tf.print("dist_adj:", dist_adj)
+
+        return dist_adj
+
+    def get_fov_adjustment(self, fov, theta):
+        r = tf.sin(theta + self.cam_theta * self.s_cam_theta * self.to_rad) / tf.sin(theta)
+
+        fov_adj = 2 * (tf.atan(r * tf.tan(fov / 2)) - (fov / 2))
+        # tf.print("fov_adj:", fov_adj / self.to_rad)
+
+        return fov_adj
 
     def trace_rays(self, inputs):
         pos_x, pos_y, pos_z, phi, theta, dist, fov = inputs
@@ -127,11 +149,18 @@ class Calibrator:
         pos_x = pos_x + self.pos_x * self.s_pos_x
         pos_y = pos_y + self.pos_y * self.s_pos_y
         pos_z = pos_z + self.pos_z * self.s_pos_z
-        dist = dist + self.dist * self.s_dist
+
+        dist_adj = self.get_dist_adjustment(dist, fov)
+        fov = (fov + self.fov * self.s_fov) * self.to_rad
+        dist = dist + self.dist * self.s_dist + dist_adj
 
         phi = (phi + self.phi * self.s_phi) * self.to_rad
         theta = (theta + self.theta * self.s_theta) * self.to_rad
-        fov = (fov + self.fov * self.s_fov) * self.to_rad
+
+        fov_adj = self.get_fov_adjustment(fov, theta)
+        fov = fov + fov_adj
+        theta = theta + self.cam_theta * self.s_cam_theta * self.to_rad
+        tf.print("Theta:", theta / self.to_rad, "Dist:", dist, "Fov:", fov / self.to_rad)
 
         # angle > 0 means clockwise in rotation_matrix_3d
         rot_z = rotation_matrix_3d.from_axis_angle(tf.constant([0., 0., 1.]), phi)
@@ -207,10 +236,17 @@ class Calibrator:
 
     def get_config(self, base):
         adjustments = [float((var * scale).numpy()) for var, scale in zip(self.all_vars, self.all_scales)]
-        return tuple([b + a for b, a in zip(base, adjustments)])
+        config = [b + a for b, a in zip(base, adjustments)]
+        base_dist, base_fov = base[-2], base[-1]
+        config_fov, config_theta = config[-1], config[-3]
+        config.append(float((self.cam_theta * self.s_cam_theta).numpy()))
+        config.append(float(self.get_dist_adjustment(base_dist, base_fov).numpy()))
+        config.append(float((self.get_fov_adjustment(config_fov * self.to_rad, config_theta * self.to_rad) / self.to_rad).numpy()))
+        return tuple(config)
 
     def set_config(self, config, base):
-        adjustments = [c - b for c, b in zip (config, base)]
+        adjustments = [c - b for c, b in zip(config[:-3] if len(config) == 10 else config, base)]
+        self.cam_theta.assign([config[-3] / self.s_cam_theta])
 
         for var, adj, scale in zip(self.all_vars, adjustments, self.scales):
             var.assign([adj / scale])
@@ -250,32 +286,103 @@ class Calibrator:
         print("Min loss so far:", self.losses[best])
         self.set_config(self.best_config, guess)
 
+        ret = list(self.best_config[:-3])
+        ret[-3] += self.best_config[-3]  # cam_theta
+        ret[-2] += self.best_config[-2]  # dist_adj
+        ret[-1] += self.best_config[-1]  # fov_adj
+        ret = tuple(ret)
+
         if plot and last:
             self.reset()  # To plot with opt_config instead of guess + vars
-            opt_img = self.make_image(self(self.best_config), plot=plot, title="Last Iteration")
+            opt_img = self.make_image(self(ret), plot=plot, title="Last Iteration")
             self.overlay(gt_img, opt_img, "After")
             self.plot_loss()
 
-        return self.best_config
+        return ret
 
     def calibrate(self, guess, gt, **kw):
         t0 = time.time()
-        self.optimize(guess, gt, vars=self.all_vars, last=False, epoch=50, rate=0.02, decay=2, **kw)
-        self.optimize(guess, gt, vars=self.loc_vars, last=False, epoch=50, rate=0.01, decay=2, **kw)
-        self.optimize(guess, gt, vars=self.rot_vars, last=False, epoch=30, rate=0.01, decay=1, **kw)
-        self.optimize(guess, gt, vars=self.cam_vars, last=False, epoch=20, rate=0.005, decay=1, **kw)
-        self.optimize(guess, gt, vars=self.all_vars, last=True, epoch=20, rate=0.001, decay=1, **kw)
+        # cal = self.optimize(guess, gt, vars=self.cam_vars, last=True, epoch=100, rate=0.03, decay=1, **kw)
+        cal = self.optimize(guess, gt, vars=self.all_vars, last=False, epoch=50, rate=0.02, decay=2, **kw)
+        cal = self.optimize(guess, gt, vars=self.loc_vars, last=False, epoch=20, rate=0.01, decay=1, **kw)
+        cal = self.optimize(guess, gt, vars=self.pos_vars, last=False, epoch=10, rate=0.01, decay=1, **kw)
+        cal = self.optimize(guess, gt, vars=self.rot_vars, last=False, epoch=20, rate=0.01, decay=1, **kw)
+        cal = self.optimize(guess, gt, vars=self.cam_vars, last=False, epoch=50, rate=0.02, decay=1, **kw)
+        cal = self.optimize(guess, gt, vars=self.all_vars, last=True, epoch=10, rate=0.003, decay=1, **kw)
         print("Total optimization time:", time.time() - t0, "sec")
-        return self.best_config
+        return cal
 
 
-def load_reference(filename, plot=False):
-    ref = np.load(filename + ".npy")
-    ref = ref[2::5, 2::5]  # make it 1px/in (faster optimization)
-    # print("reference:", ref.shape, ref.dtype)
+def to_gray(img):
+    img[np.nonzero(img)] = 1
+    img *= np.array([1, 2, 4], dtype=np.uint8)[None, None, :]
+
+    gray = np.zeros(img.shape[:2], dtype=np.uint8)
+    gray[...] = np.sum(img, axis=2, dtype=np.uint8)
+    correspondence = np.array([0, 1, 2, 6, 3, 5, 7, 4], dtype=np.uint8)
+    gray[...] = correspondence[gray.ravel()].reshape(img.shape[:2])
+
+    return gray
+
+
+def from_gray(gray):
+    img = np.zeros((*gray.shape, 3), dtype=np.uint8)
+    colors = np.array([[0, 0, 0],       # background
+                       [255, 0, 0],     # dirt
+                       [0, 255, 0],     # grass
+                       [0, 0, 255],     # home plate
+                       [255, 255, 255], # lines
+                       [255, 0, 255],   # pitcher mound
+                       [255, 255, 0],   # people
+                       [0, 255, 255]],  # bases
+                       dtype=np.uint8)
+
+    img.reshape((-1, 3))[...] = colors[gray.ravel(), :]
+
+    return img
+
+
+def to_opt(img):
+    mapping = np.array([0, 2, 1, 3, 3, 4, 0, 3], dtype=np.uint8)
+    return mapping[img.ravel()].reshape(img.shape[:2])
+
+
+def cache_reference(filename, downsample=True, plot=False):
+    ref = cv2.imread(filename + ".png")[:, :, ::-1]
+
+    if downsample:
+        ref = ref[2::5, 2::5]  # make it 1px/in (faster optimization)
+
+    print(ref.shape, ref.dtype)
 
     if plot:
-        plt.figure("Gray Reference", (16, 9))
+        plt.figure("Color Reference")
+        plt.imshow(ref)
+
+    gray = to_gray(ref)
+    np.save(filename + ".npy", gray)
+
+    if plot:
+        plt.figure("Gray Reference")
+        plt.imshow(gray)
+
+        plt.figure("Colored Reference")
+        plt.imshow(from_gray(gray))
+
+
+def load_reference(filename, optimize=True, downsample=False, plot=False):
+    ref = np.load(filename + ".npy")
+
+    if downsample:
+        ref = ref[2::5, 2::5]  # make it 1px/in (faster optimization)
+
+    # print("reference:", ref.shape, ref.dtype)
+
+    if optimize:
+        ref = to_opt(ref)
+
+    if plot:
+        plt.figure("Optimization Reference", (16, 9))
         plt.imshow(ref)
         plt.colorbar()
         plt.tight_layout()
@@ -296,7 +403,7 @@ def gen_mask(w, h, plot=False):
 
 
 def validate():
-    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in"
+    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
 
     ref = load_reference(reference_filename, plot=False)
     mask = gen_mask(1920, 1080, plot=False)
@@ -304,31 +411,58 @@ def validate():
     cal = Calibrator(ref, mask, plot=True)
 
     # Behind Pitcher
-    calib_true = (45, 45, 5, 180 + 45, 5, 400, 5)
-    calib_guess = (55, 50, 7, 180 + 46, 6, 350, 4.5)
+    # calib_true = (45, 45, 5, 180 + 45, 5, 400, 5)
+    # calib_guess = (55, 50, 7, 180 + 44, 6, 350, 4.5)
+
+    # Behind Pitcher (Zoom)
+    # calib_true = (45, 45, 5, 180 + 45, 7, 400, 5)
+    # calib_guess = (45, 45, 5, 180 + 45, 7, 350, 4.5)
 
     # Pitcher Side (Right Handed)
     # calib_true = (45, 45, 10, 90 + 55, 7, 200, 10)
-    # calib_guess = (75, 30, 6, 90 + 65, 6, 250, 8)
+    # calib_guess = (75, 30, 6, 90 + 50, 6, 250, 8)
 
     # Batter Side (Right Handed)
     # calib_true = (0, 0, 5, -55, 4, 100, 15)
     # calib_guess = (5, 10, 3, -40, 3, 122, 12)
 
     # Behind Batter
-    # calib_true = (40, 40, 0, 45, 20, 300, 25)
-    # calib_guess = (50, 60, 10, 50, 15, 330, 22)
+    calib_true = (40, 40, 0, 45, 20, 300, 25)
+    calib_guess = (50, 60, 10, 50, 15, 330, 22)
 
     calib_opt = cal.calibrate(calib_guess, cal(calib_true), plot=True)
     print("\nOptimal calibration:", calib_opt)
 
 
 def test():
-    pass
+    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
+    # segmentation_filename = "../baseball_field/baseball_field_example_1_segmented.png"
+    segmentation_filename = "../baseball_field/baseball_field_example_2_segmented.png"
+    # segmentation_filename = "../baseball_field/baseball_field_example_weird_segmented.png"
+
+    ref = load_reference(reference_filename, plot=False)
+    seg = cv2.imread(segmentation_filename)[:, :, ::-1]
+
+    gt = to_opt(to_gray(seg))
+    mask = gt > 0
+    gt = gt.ravel()[mask.ravel()]
+
+    cal = Calibrator(ref, mask, plot=True)
+
+    calib_guess = (50, 40, 10, 50, 15, 330, 22)
+    tf_gt = tf.convert_to_tensor(value=gt, dtype=tf.float32)
+
+    calib_opt = cal.calibrate(calib_guess, tf_gt, plot=True)
+    print("\nOptimal calibration:", calib_opt)
 
 
 if __name__ == "__main__":
-    validate()
-    # test()
+    # cache_reference("../baseball_field/baseball_field_segmentation_5px_per_in_2", plot=True)
+    # ref = load_reference("../baseball_field/baseball_field_segmentation_5px_per_in_2", plot=True)
+    # plt.show()
+    # exit()
+
+    # validate()
+    test()
 
     plt.show()

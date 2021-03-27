@@ -310,11 +310,13 @@ def scipy_optimize(ref, ground_truth, calib_guess):
 
 
 if __name__ == "__main__":
-    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in"  # assumes png
+    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"  # assumes png
 
-    # cache_reference(reference_filename, plot=True)
+    cache_reference(reference_filename, plot=True)
 
-    ref = load_reference(reference_filename, plot=False)
+    ref = load_reference(reference_filename, plot=True)
+    plt.show()
+    exit()
 
     # vertical_fov (deg), position (x', y', z'), view_dir_phi (deg), view_dir_theta (deg)
     calib_true = (5, 400, 400, 50, 180+45, 5)
