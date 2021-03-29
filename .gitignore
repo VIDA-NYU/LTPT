@@ -1,5 +1,6 @@
 config.json
 *.npy
+*.zip
 .idea/
 .vscode/
 all_images/
@@ -7,4 +8,6 @@ all_masks/
 selected_images/
 selected_masks/
 some_segmented/
+pitcher_images/
+best_images_2203/
 __pycache__/

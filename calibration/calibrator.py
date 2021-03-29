@@ -1,3 +1,4 @@
+import os
 import cv2
 import time
 import json
@@ -284,6 +285,7 @@ class Calibrator:
 
         best = int(np.argmin(self.losses))
         self.best_config = self.configs[best]
+        self.best_loss = self.losses[best]
         print("Best config %d:" % best, self.best_config)
         print("Min loss so far:", self.losses[best])
         self.set_config(self.best_config, guess)
@@ -294,11 +296,15 @@ class Calibrator:
         ret[-1] += self.best_config[-1]  # fov_adj
         ret = tuple(ret)
 
-        if plot and last:
+        if last:
             self.reset()  # To plot with opt_config instead of guess + vars
-            opt_img = self.make_image(self(ret), plot=plot, title="Last Iteration")
-            self.overlay(gt_img, opt_img, "After")
-            self.plot_loss()
+            self.best_img = self.make_image(self(ret), plot=plot, title="Last Iteration")
+
+            if plot:
+                self.overlay(gt_img, self.best_img, "After")
+                self.plot_loss()
+        else:
+            self.best_img = None
 
         return ret
 
@@ -306,14 +312,14 @@ class Calibrator:
         t0 = time.time()
         # cal = self.optimize(guess, gt, vars=self.cam_vars, last=True, epoch=100, rate=0.03, decay=1, **kw)
         # cal = self.optimize(guess, gt, vars=self.all_vars, last=True, epoch=10, rate=0.02, decay=2, **kw)
-        cal = self.optimize(guess, gt, vars=self.all_vars, last=False, epoch=50, rate=0.02, decay=2, **kw)
+        cal = self.optimize(guess, gt, vars=self.all_vars, last=False, epoch=50, rate=0.01, decay=2, **kw)
         cal = self.optimize(guess, gt, vars=self.loc_vars, last=False, epoch=20, rate=0.01, decay=1, **kw)
         cal = self.optimize(guess, gt, vars=self.pos_vars, last=False, epoch=10, rate=0.01, decay=1, **kw)
         cal = self.optimize(guess, gt, vars=self.rot_vars, last=False, epoch=20, rate=0.01, decay=1, **kw)
-        cal = self.optimize(guess, gt, vars=self.cam_vars, last=False, epoch=50, rate=0.02, decay=1, **kw)
+        cal = self.optimize(guess, gt, vars=self.cam_vars, last=False, epoch=50, rate=0.01, decay=1, **kw)
         cal = self.optimize(guess, gt, vars=self.all_vars, last=True, epoch=10, rate=0.003, decay=1, **kw)
         print("Total optimization time:", time.time() - t0, "sec")
-        return cal
+        return cal, float(self.best_loss), self.best_img
 
 
 def to_gray(img):
@@ -367,8 +373,13 @@ def peter_to_gray(img, annot=False):
         correspondence[107 + 142 + 35] = 2
         correspondence[255 + 255 + 255] = 4
     else:
+        # old
+        # correspondence[128 + 64 + 128] = 1
+        # correspondence[70 + 70 + 70] = 2
+        # new
         correspondence[128 + 64 + 128] = 1
-        correspondence[70 + 70 + 70] = 2
+        correspondence[152 + 251 + 152] = 2
+        correspondence[220 + 20 + 60] = 6
 
     gray[...] = correspondence[gray.ravel()].reshape(img.shape[:2])
 
@@ -434,13 +445,13 @@ def gen_mask(w, h, plot=False):
     return mask
 
 
-def validate():
+def validate(plot=True):
     reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
 
     ref = load_reference(reference_filename, plot=False)
     mask = gen_mask(1920, 1080, plot=False)
 
-    cal = Calibrator(ref, mask, plot=True)
+    cal = Calibrator(ref, mask, plot=plot)
 
     # Behind Pitcher
     # calib_true = (45, 45, 5, 180 + 45, 5, 400, 5)
@@ -462,11 +473,11 @@ def validate():
     calib_true = (40, 40, 0, 45, 20, 300, 25)
     calib_guess = (50, 60, 10, 50, 15, 330, 22)
 
-    calib_opt = cal.calibrate(calib_guess, cal(calib_true), plot=True)
+    calib_opt, _, _ = cal.calibrate(calib_guess, cal(calib_true), plot=plot)
     print("\nOptimal calibration:", calib_opt)
 
 
-def test():
+def test(plot=True):
     reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
     # segmentation_filename = "../baseball_field/baseball_field_example_1_segmented.png"
     segmentation_filename = "../baseball_field/baseball_field_example_2_segmented.png"
@@ -479,16 +490,54 @@ def test():
     mask = gt > 0
     gt = gt.ravel()[mask.ravel()]
 
-    cal = Calibrator(ref, mask, plot=True)
+    cal = Calibrator(ref, mask, plot=plot)
 
     calib_guess = (50, 40, 10, 50, 15, 330, 22)
     tf_gt = tf.convert_to_tensor(value=gt, dtype=tf.float32)
 
-    calib_opt = cal.calibrate(calib_guess, tf_gt, plot=True)
+    calib_opt, _, _ = cal.calibrate(calib_guess, tf_gt, plot=plot)
     print("\nOptimal calibration:", calib_opt)
 
 
-def generate():
+def generate_single(path, id, view, side, out_path=None, plot=True):
+    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
+    ref = load_reference(reference_filename, plot=False)
+
+    out_path = out_path or path
+    filename = path + id + "_" + view + "_prediction.png"
+
+    seg = cv2.imread(filename)[:, :, ::-1]
+    gt = to_opt(to_gray(seg))
+    # gt = to_opt(peter_to_gray(seg))
+
+    mask = gt >= 0  # Ignore. Segmentations are too bad to use masks
+    # mask[:mask.shape[0]//3, :] = 0  # Just trim the top thrid of the image for faster rendering
+    gt = gt.ravel()[mask.ravel()]
+    tf_gt = tf.convert_to_tensor(value=gt, dtype=tf.float32)
+
+    cal = Calibrator(ref, mask, plot=plot)
+
+    if side == "third base":
+        calib_guess = (41, 41, 5, 90 + 35, 1, 100, 6)
+    else:
+        calib_guess = (41, 41, 5, -35, 1, 100, 6)
+
+    calib_opt, loss, img = cal.calibrate(calib_guess, tf_gt, plot=plot)
+    print("\nOptimal calibration:", calib_opt)
+
+    if img is not None:
+        img *= 100
+        img = img.astype(np.uint8)
+        cv2.imwrite(out_path + id + "_" + view + "_calibration.png", np.stack([img, img, img], axis=2))
+
+    with open(out_path + id + "_" + view + ".json", "w") as f:
+        json.dump({"calib": calib_opt,
+                   "loss": loss,
+                   "calib_hint": "pox_x (feet), pox_y (feet), pox_z (feet), phi (deg), theta (deg), dist (feet), fov (deg)",
+                   "loss_hint": "MSE over pixel differences"}, f, indent=4)
+
+
+def generate_all(path, out_path=None, plot=False):
     db = MongoClient("mongodb+srv://yurii:yuriimongo@ltpt.qsvio.mongodb.net").ltpt
     videos = list(db["videos"].find({}))
     print(len(videos), "videos")
@@ -500,34 +549,29 @@ def generate():
     print(len(pitcher_vids), "pitcher videos")
     print(next(iter(pitcher_vids.items())))
 
-    reference_filename = "../baseball_field/baseball_field_segmentation_5px_per_in_2"
-    ref = load_reference(reference_filename, plot=False)
+    out_path = out_path or path
 
-    selection = "603ffd1071a81c8b9eae02f3"
-    path = "../all_masks/"
-    # path = "../some_segmented/"
-    segmentation_filename = path + selection + "_" + pitcher_vids[selection]["view"] + ".png"
+    # id = "603ffd0a71a81c8b9eae028b"
+    # id = "603ffd0c71a81c8b9eae02ab"
+    # for i, (id, vid) in enumerate([(id, pitcher_vids[id])]):
+    for i, (id, vid) in enumerate(pitcher_vids.items()):
+        view, side = vid["view"], vid["predicted_side"]
 
-    seg = cv2.imread(segmentation_filename)[:, :, ::-1]
-    gt = to_opt(peter_to_gray(seg, annot=(path == "../all_masks/")))
+        filename = path + id + "_" + view + "_prediction.png"
 
-    mask = gt >= 0  # Ignore. Segmentations are too bad to use masks
-    gt = gt.ravel()[mask.ravel()]
-    tf_gt = tf.convert_to_tensor(value=gt, dtype=tf.float32)
+        if not os.path.exists(filename):
+            print("Missing:", filename)
+            continue
 
-    cal = Calibrator(ref, mask, plot=True)
+        if view != "C":
+            print("Wrong view:", filename)
+            continue
 
-    if pitcher_vids[selection]["predicted_side"] == "third base":
-        calib_guess = (41, 41, 5, 90 + 35, 1, 100, 6)
-    else:
-        # TODO: Verify with example
-        calib_guess = (41, 41, 5, -35, 1, 100, 6)
+        # Slice HERE
+        if i > 2:
+            break
 
-    calib_opt = cal.calibrate(calib_guess, tf_gt, plot=True)
-    print("\nOptimal calibration:", calib_opt)
-
-    with open(path + selection + ".json", "w") as f:
-        json.dump(calib_opt, f, indent=4)
+        generate_single(path, id, view, side, out_path=out_path, plot=plot)
 
 
 if __name__ == "__main__":
@@ -536,8 +580,15 @@ if __name__ == "__main__":
     # plt.show()
     # exit()
 
-    # validate()
-    # test()
-    generate()
+    # validate(plot=True)
+    # test(plot=False)
+
+    # path = "../some_segmented/"
+    path = "../best_images_2203/"
+
+    out_path = "../pitcher_images/"
+    # out_path = path
+
+    generate_all(path, out_path=out_path, plot=True)
 
     plt.show()
