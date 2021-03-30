@@ -191,7 +191,7 @@ def _load_meta(client):
             "$in": pose_ids
         }
     })
-    print("pose fetched", len(pose_docs))
+    print("pose fetched")
     print("duplicated records:", count)
     filtered_data = {}
     i = 0
