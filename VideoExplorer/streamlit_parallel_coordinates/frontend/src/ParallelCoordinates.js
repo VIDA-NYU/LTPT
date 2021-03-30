@@ -31,6 +31,19 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     let yAxis = d3.axisLeft();
 
     const devicePixelRatio = 1;
+    console.log(data)
+    console.log(dimensions)
+    let dimensionValues = dimensions.map(d=>{
+        return {
+            key: d.key,
+            values: data.map(item=>item[d.key])
+        }
+    })
+    console.log(dimensionValues);
+
+    // data.reduce((acc, c)=>{
+    //     if()
+    // }, {})
     let types = {
         "Number": {
             key: "Number",
@@ -38,7 +51,10 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
                 return +d;
             },
             extent: d3.extent,
-            domain: [0, 100],
+            domain: d=> {
+                let count = dimensionValues.filter(count=>count.key===d.key)[0];
+                return [0, d3.max(count.values)*1.1]
+            },
             within: function (d, extent, dim) {
                 return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1];
             },
@@ -50,7 +66,7 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
                 return +d;
             },
             extent: (data)=>[0, 180],
-            domain: [0, 180],
+            domain: d => [0, 180],
             within: function (d, extent, dim) {
                 return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1];
             },
@@ -85,7 +101,8 @@ export default function ParallelCoordinates({data, dimensions, setColumnFocus, o
     //     .style("width", width + margin.left + margin.right + "px")
     //     .style("height", height + margin.top + margin.bottom + "px");
     dimensions = dimensions.map(d => {
-        let yScale = scaleLinear().domain(types[d.type].domain).range([0, innerHeight])
+        console.log(d);
+        let yScale = scaleLinear().domain(types[d.type].domain(d)).range([0, innerHeight])
         return {
             ...d,
             scale: yScale,

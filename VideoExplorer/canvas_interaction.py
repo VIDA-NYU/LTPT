@@ -1,6 +1,6 @@
 from streamlit_canvas import component_func as st_canvas, use_component
 # from streamlit_canvas import component_func as st
-import streamlit as st
+# import streamlit as st
 import numpy as np
 import pandas as pd
 kps_source = {
@@ -26,6 +26,9 @@ kps_source = {
 
 def plot_canvas(op):
     return st_canvas(operation=op)
+IMAGE_HEIGHT = 540
+IMAGE_WIDTH = 960
+IMAGE_SIZE = [960, 540]
 
 def extract_vector(line, data):
 
@@ -34,6 +37,8 @@ def extract_vector(line, data):
     src_pos = np.array(src_pos)
     dest_pos = np.array(dest_pos)
     v = dest_pos - src_pos
+    image_size = np.array(IMAGE_SIZE)
+    v = np.multiply(v, image_size)
     return v
 
 
@@ -71,14 +76,26 @@ def format_lines(line0, line1):
     }
     return _line0, _line1
 
+def calculate_calibration_coeff(data):
+    calibration = data['calibration']['calib']
+    phi = calibration[3] * np.pi / 180
+    theta = calibration[4] * np.pi / 180
+    dist = calibration[5]
+    fov = calibration[6] * np.pi / 180
+    p = np.array([-1/np.sqrt(2), -1/np.sqrt(2), 0])
+    v = np.array([np.sin(phi)*np.cos(theta), np.cos(phi) * np.cos(theta), -np.sin(theta)])
+    alpha = np.arccos(np.dot(p, v))
+    c = 2 * dist * np.tan(fov / 2.0) / (IMAGE_HEIGHT * np.sin(alpha))
+    return c
 
-@st.cache
+
+# @st.cache
 def build_metric_func(metric):
     if not metric:
         return lambda x: 0
 
-
     def _f(data):
+        pose_data = data['pose_data']
         if metric['type'] == "Angle":
             vectoddrs = []
             selected_lines = metric['lines']
@@ -86,8 +103,8 @@ def build_metric_func(metric):
             #     line = lines[int(line_idx)]
             #     selected_lines.append(line)
             line0, line1 = format_lines(*selected_lines)
-            v0 = extract_vector(line0, data)
-            v1 = extract_vector(line1, data)
+            v0 = extract_vector(line0, pose_data)
+            v1 = extract_vector(line1, pose_data)
 
             angle = calculate_angle(v0, v1)
             angle = radian_to_angle(angle)
@@ -95,8 +112,12 @@ def build_metric_func(metric):
         else:
             line = metric['lines'][0]
             # line = lines[int(line_idx)]
-            vector = extract_vector(line, data)
-            return calculate_vector_length(vector) * 100
+            vector = extract_vector(line, pose_data)
+            dist = calculate_vector_length(vector)
+            if data['view'] == "C":
+                coeff = calculate_calibration_coeff(data)
+                dist = dist * coeff
+            return dist
     return _f
 
 def calculate_metrics(metric_def, video_df, meta_data):
@@ -106,7 +127,7 @@ def calculate_metrics(metric_def, video_df, meta_data):
         file_id = row[1]['file']
         meta = meta_data[file_id]
         if "pose_data" in meta:
-            metric_value = f(meta['pose_data'])
+            metric_value = f(meta)
             if np.isnan(metric_value):
                 metric_value = 0
             values.append([file_id, metric_value])

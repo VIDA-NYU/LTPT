@@ -124,25 +124,21 @@ def _load_meta(client):
             "play": doc['play'],
             "game": doc['game'],
             "col": doc['col'],
-            "predicted_view": doc['predicted_view']
+            "predicted_view": doc['predicted_view'],
         }
+        if "calibration" in doc:
+            obj['calibration'] = doc['calibration']
         data[file_id] = obj
         if "poses" in doc:
             pose_ids.append(doc['pose_id'])
             files_with_pose.append(file_id)
             selected_video_ids.append(doc['_id'])
         count += 1
-    print("videos processed")
-    pose_docs = db['poses'].find({
-        "_id": {
-            "$in": pose_ids
-        }
-    })
-    print("pose fetched")
+    print("videos processed", len(selected_video_ids))
+
     pose_index = {}
     # for i, pose_doc in enumerate(pose_docs):
     #     pose_index[str(pose_doc['_id'])] = i
-
 
     action_docs = list(db['actions'].find({
         "$or": [
@@ -152,18 +148,19 @@ def _load_meta(client):
                 }
             },
             {
-                "actions.swing.video_id": {
+                "actions.release.video_id": {
                     "$in": selected_video_ids
                 }
             }
         ]
 
     }))
-    print("actions fetched")
+    print("actions fetched", len(action_docs))
+
     count = 0
-    print(len(action_docs))
     # valid_games = ["181101_AFL-PEORIA_AFL-SCOTTSDALE__0"]
     pose_info = {}
+    pose_ids = []
     for i, action_doc in enumerate(action_docs):
         actions = extract_action_data(action_doc)
         for action in actions:
@@ -174,6 +171,7 @@ def _load_meta(client):
                 "frame": action['frame'],
                 "action": action['action']
             }
+            pose_ids.append(action['pose_bid'])
             # pose_doc = pose_docs[pose_index[action['pose_id']]]
             # file_doc = data[action['file_id']]
             # if file_doc['game'] not in valid_games:
@@ -188,6 +186,12 @@ def _load_meta(client):
             # print(file_doc['frame'])
             # file_doc['pose_frame_data'] = file_doc['pose_data'][file_doc['frame']]
             # print(file_doc)
+    pose_docs = db['poses'].find({
+        "_id": {
+            "$in": pose_ids
+        }
+    })
+    print("pose fetched", len(pose_docs))
     print("duplicated records:", count)
     filtered_data = {}
     i = 0
@@ -214,6 +218,7 @@ def _load_meta(client):
             file_doc['pose_data'] = list(map( lambda x: list(map(lambda y: y[frame], x)), pose_data))
             # filtered_data[file_doc['file_id']] = file_doc
             file_id = "video-" + str(file_count)
+            file_id = str(pose_doc['video_id'])
             file_doc["file_id"] = file_id
             file_doc['action'] = pose_item['action']
             file_count += 1
@@ -224,7 +229,7 @@ def _load_meta(client):
             # print("fu")
         i += 1
     client.close()
-    print("processed")
+    print("processed", len(list(filtered_data.keys())))
     return filtered_data
 
 def extract_action_data(action_doc):
@@ -236,6 +241,7 @@ def extract_action_data(action_doc):
         data = {
             "file_id": str(action_data['video_id']),
             "pose_id": str(action_data['pose_id']),
+            "pose_bid": action_data['pose_id'],
             "frame": frame,
             "view": action_data['view'],
             "action": action_name
@@ -278,13 +284,15 @@ def generate_df_by_meta(meta_data):
         game = meta_data[file_id]['game']
         play = doc['play']
         col = doc['col']
+        predicted_view = doc['predicted_view']
+        if predicted_view == "Pitcher" and "calibration" not in doc:
+            continue
         file_ids.append(file_id)
         values.append(value)
         views.append(view)
         games.append(game)
         plays.append(play)
         cols.append(col)
-        predicted_view = doc['predicted_view']
         true_camera_views.append(predicted_view)
     data = {
         "file": file_ids,
@@ -325,6 +333,9 @@ def process_df(oldcsv, meta_data):
             game = meta_data[file_id]['game']
             play = doc['play']
             col = doc['col']
+
+            if view == "C" and "calibration" not in doc:
+                continue
             values.append(value)
             views.append(view)
             games.append(game)
@@ -340,10 +351,11 @@ def process_df(oldcsv, meta_data):
     oldcsv['play'] = plays
     return oldcsv
 if __name__ == '__main__':
+    load_meta_from_mongo()
     # process_csv()
     # save_remote_db_to_local()
-    data = load_meta()
-    with open("meta.json", "w") as fp:
-        json.dump(data, fp)
+    # data = load_meta()
+    # with open("meta.json", "w") as fp:
+    #     json.dump(data, fp)
     # load_meta()
 # meta_data = load_meta_by_json()

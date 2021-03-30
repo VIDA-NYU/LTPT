@@ -63,7 +63,6 @@ for file_id in meta_data:
         valid_files.append(file_id)
 valid_files = list(map(lambda x: x, valid_files))
 video_df = video_df[video_df['file'].isin(valid_files)]
-
 ##############
 # Streamlit Dashboard
 def main():

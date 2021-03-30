@@ -17,8 +17,12 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
     let table = {
         table: data
     }
-    const [binSize, setBinSize] = useState(5);
-    const [autoScale, setAutoScale] = useState(false);
+    console.log(data);
+    let values = data.map(d=>d[column.key]);
+    console.log(values)
+    const defaultBinSize = 5;
+    const [autoScale, setAutoScale] = useState(true);
+    const [userSettings, setUserSettings] = useState({});
     useEffect(() => {
         let resizeTimer;
         const handleResize = () => {
@@ -29,8 +33,6 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
                 // canvasObj?.setWidth(window.innerWidth)
             }, 300);
             // setHeight(window.innerHeight);
-            console.log(window.innerHeight)
-            console.log("hello wsorld");
         };
         window.addEventListener("resize", handleResize);
         return () => {
@@ -66,15 +68,16 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
     let controlPanelStyle = {
         display: "flex",
         flexDirection: "row",
-        marginLeft: "50px",
-        justifyContent: "space-evenly",
+        marginLeft: "90px",
+        marginRight: "50px",
+        justifyContent: "center",
         marginBottom: "5px"
     }
     let controlSwitchStyle = {
 
     }
     let controlSliderStyle = {
-        width: "90px"
+        width: "150px"
     };
     let switchStyle = {
         display: "flex",
@@ -98,7 +101,7 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
     if(column.type === "Angle"){
         domain = [0, 180]
     }else{
-        domain = [0, 100]
+        domain = d3.extent(values);
     }
     if(thisFilter.length === 1){
         extent = thisFilter[0].extent;
@@ -144,8 +147,15 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
 
 
     },[columnFilters, columnName])
-
+    let binSize = defaultBinSize
+    if(userSettings[column.key]){
+        binSize = userSettings[column.key].binSize;
+    }
     let getXEncoding = (useAuto) => {
+
+        // return {
+        //     "field": columnName, "bin": {step: binSize}
+        // }
         if(!useAuto){
             return {
                 "field": columnName, "bin": {step: binSize}, scale: {
@@ -207,7 +217,12 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
         setAutoScale(!autoScale);
     }
     let handleSliderChange = (e, newvalue) =>{
-        setBinSize(newvalue)
+        setUserSettings({
+            ...userSettings,
+            [column.key]: {
+                binSize: newvalue
+            }
+        })
     }
     return (
         <Card style={containerStyle}>
@@ -224,19 +239,19 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
             </div>
             <div style={controlPanelStyle}>
                 {/*<div style={switchStyle}>*/}
-                    <FormControlLabel style={controlSwitchStyle}
-                                      control={
-                                          <Switch
-                                              size={"small"}
-                                              checked={autoScale}
-                                              onChange={() => handleScaleChange()}
-                                              name="auto scale"
-                                              color="primary"
-                                          />
-                                      }
-                                      // label={""}
-                                      label="Auto Scale"
-                    />
+                {/*    <FormControlLabel style={controlSwitchStyle}*/}
+                {/*                      control={*/}
+                {/*                          <Switch*/}
+                {/*                              size={"small"}*/}
+                {/*                              checked={autoScale}*/}
+                {/*                              onChange={() => handleScaleChange()}*/}
+                {/*                              name="auto scale"*/}
+                {/*                              color="primary"*/}
+                {/*                          />*/}
+                {/*                      }*/}
+                {/*                      // label={""}*/}
+                {/*                      label="Auto Scale"*/}
+                {/*    />*/}
                     {/*<span> Adaptive Scale </span>*/}
                 {/*</div>*/}
 
@@ -253,6 +268,7 @@ export default function BarDistribution({data, column, imageFilter, columnFilter
                         marks
                         min={1}
                         max={30}
+                        // disabled={autoScale}
                     />
                     <span> Bin Size</span>
                 </div>

@@ -128,8 +128,6 @@ function CanvasComponent({args}: ComponentProps) {
                 // setHeight(window.innerHeight);
                 // canvasObj?.setWidth(window.innerWidth)
             }, 300);
-            console.log(window.innerHeight)
-            console.log("hello world");
         };
         window.addEventListener("resize", handleResize);
         return () => {
@@ -285,8 +283,6 @@ function CanvasComponent({args}: ComponentProps) {
     }, [canvasObj, metrics]);
     const div = useCallback(node => {
         if (node !== null) {
-            console.log(node.getBoundingClientRect().height);
-            console.log(node.getBoundingClientRect().width);
         }
     }, []);
 
